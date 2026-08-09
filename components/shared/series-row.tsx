@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { ListMusic, Clock } from "lucide-react";
+import { ListMusic } from "lucide-react";
 import { cn } from "@/utils/cn";
-import { formatDurationHuman } from "@/utils/duration";
 import type { SeriesPublic } from "@/repositories/series-repository";
 
 type SeriesRowProps = {
@@ -37,10 +36,6 @@ export function SeriesRow({ series, className }: SeriesRowProps) {
           <span className="inline-flex items-center gap-1">
             <ListMusic className="h-3 w-3" aria-hidden />
             {series.totalSesi} sesi
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <Clock className="h-3 w-3" aria-hidden />
-            {formatDurationHuman(series.totalDurasi)}
           </span>
         </span>
 
