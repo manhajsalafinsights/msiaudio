@@ -10,6 +10,7 @@ import { listPublishedSeriesTypes, findPublishedSeriesTypeBySlug } from "@/repos
 import { Container } from "@/components/ui/container";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SeriesCard } from "@/components/shared/series-card";
+import { SeriesCardCompact } from "@/components/shared/series-card-compact";
 import { SeriesCardSkeleton } from "@/components/shared/series-card-skeleton";
 import { AudioRow } from "@/components/shared/audio-row";
 import { AudioRowSkeleton } from "@/components/shared/audio-row-skeleton";
@@ -174,9 +175,9 @@ function LatestSeriesSection() {
       <SectionHeader title="Series Terbaru" moreHref="/series" />
       <Suspense
         fallback={
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <SeriesCardSkeleton key={i} />
+              <div key={i} className="skeleton h-20 rounded-xl" />
             ))}
           </div>
         }
@@ -193,9 +194,9 @@ async function LatestSeriesGrid() {
     return <EmptyState title="Belum ada series" description="Series akan muncul di sini." />;
   }
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {result.items.map((series) => (
-        <SeriesCard key={series.id} series={series} />
+        <SeriesCardCompact key={series.id} series={series} />
       ))}
     </div>
   );

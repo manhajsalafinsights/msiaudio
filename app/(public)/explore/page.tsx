@@ -8,6 +8,7 @@ import { Heading, Text } from "@/components/ui/typography";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { SeriesCard } from "@/components/shared/series-card";
+import { SeriesCardCompact } from "@/components/shared/series-card-compact";
 import { SeriesCardSkeleton } from "@/components/shared/series-card-skeleton";
 import { AudioRow } from "@/components/shared/audio-row";
 import { AudioRowSkeleton } from "@/components/shared/audio-row-skeleton";
@@ -357,9 +358,9 @@ export default async function ExplorePage({
           </Button>
         </div>
         {latestSeries.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {latestSeries.map((series) => (
-              <SeriesCard key={series.id} series={series} />
+              <SeriesCardCompact key={series.id} series={series} />
             ))}
           </div>
         ) : (

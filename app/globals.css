@@ -365,6 +365,21 @@
   transform: translateY(-2px);
 }
 
+.card-glass {
+  background-color: color-mix(in srgb, var(--msi-surface) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--msi-border) 45%, transparent);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-glass:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
 .card-msi {
   background-color: var(--msi-surface);
   border: 1px solid var(--msi-border);
