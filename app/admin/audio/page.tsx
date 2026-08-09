@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, ListPlus } from "lucide-react";
 import { listAudioAdmin } from "@/repositories/audio-repository";
 import { listAllSeries } from "@/repositories/series-repository";
 import { Button } from "@/components/ui/button";
@@ -69,12 +69,20 @@ export default async function AdminAudioPage({
         title="Audio"
         description="Kelola rekaman audio setiap sesi"
         action={
-          <Button asChild>
-            <Link href={`/admin/audio/new?back=${encodeURIComponent(backHref)}`}>
-              <Plus className="h-4 w-4" />
-              Tambah Audio
-            </Link>
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" asChild>
+              <Link href="/admin/audio/import">
+                <ListPlus className="h-4 w-4" />
+                Import Playlist
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href={`/admin/audio/new?back=${encodeURIComponent(backHref)}`}>
+                <Plus className="h-4 w-4" />
+                Tambah Audio
+              </Link>
+            </Button>
+          </div>
         }
       />
 
