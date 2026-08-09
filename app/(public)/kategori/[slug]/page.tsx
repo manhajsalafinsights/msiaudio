@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { buildBreadcrumbJsonLd, buildOpenGraph, buildTwitter, canonicalUrl } from "@/lib/seo";
 import { findPublishedCategoryBySlug } from "@/repositories/category-repository";
-import { listPublishedCategorySlugs } from "@/repositories/category-repository";
 import { getFilteredAudioList } from "@/services/search-service";
 import { Container } from "@/components/ui/container";
 import { Heading, Text } from "@/components/ui/typography";
@@ -18,11 +17,6 @@ import { Pagination } from "@/components/shared/pagination";
 
 export const revalidate = 60;
 export const dynamicParams = true;
-
-export async function generateStaticParams() {
-  const slugs = await listPublishedCategorySlugs();
-  return slugs.map((slug) => ({ slug }));
-}
 
 const AUDIO_PER_PAGE = 20;
 const SERIES_PREVIEW = 6;
@@ -67,9 +61,7 @@ async function AudioListSection({
   const result = await getFilteredAudioList(page, AUDIO_PER_PAGE, { categoryId });
 
   if (result.items.length === 0) {
-    return (
-      <EmptyState title="Belum ada audio" description="Belum ada audio pada kategori ini." />
-    );
+    return <EmptyState title="Belum ada audio" description="Belum ada audio pada kategori ini." />;
   }
 
   return (
@@ -83,7 +75,8 @@ async function AudioListSection({
         page={page}
         totalPages={result.totalPages}
         baseHref={`/kategori/${categorySlug}`}
-      />    </div>
+      />{" "}
+    </div>
   );
 }
 
@@ -160,7 +153,11 @@ export default async function KategoriDetailPage({
             </div>
           }
         >
-          <AudioListSection categoryId={kategori.id} categorySlug={kategori.slug} page={currentPage} />
+          <AudioListSection
+            categoryId={kategori.id}
+            categorySlug={kategori.slug}
+            page={currentPage}
+          />
         </Suspense>
       </section>
     </Container>

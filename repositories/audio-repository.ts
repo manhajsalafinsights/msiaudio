@@ -65,6 +65,26 @@ export async function listPublishedAudioBySeries(seriesId: string) {
   });
 }
 
+/** Daftar ringan audio published satu series — khusus membangun queue player. */
+export async function listPublishedAudioQueueBySeries(seriesId: string) {
+  return prisma.audio.findMany({
+    where: { seriesId, published: true },
+    select: {
+      id: true,
+      slug: true,
+      judul: true,
+      deskripsi: true,
+      durasi: true,
+      cover: true,
+      nomorSesi: true,
+      createdAt: true,
+      updatedAt: true,
+      mediaSources: { select: { id: true, provider: true, url: true, providerId: true } },
+    },
+    orderBy: { nomorSesi: "asc" },
+  });
+}
+
 /** Audio published terbaru lintas series (Home → "Kajian Terbaru"). */
 export async function listRecentPublishedAudio(limit: number) {
   return prisma.audio.findMany({

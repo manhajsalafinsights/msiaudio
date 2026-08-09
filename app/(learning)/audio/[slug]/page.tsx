@@ -3,10 +3,17 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { site } from "@/lib/config/site";
-import { absoluteUrl, buildOpenGraph, buildTwitter, canonicalUrl, OG_IMAGE_WIDTH, OG_IMAGE_HEIGHT } from "@/lib/seo";
+import {
+  absoluteUrl,
+  buildOpenGraph,
+  buildTwitter,
+  canonicalUrl,
+  OG_IMAGE_WIDTH,
+  OG_IMAGE_HEIGHT,
+} from "@/lib/seo";
 import { NotFoundError } from "@/lib/errors/app-error";
 import { getPlayerContext } from "@/features/player/services/player-service";
-import { listPublishedAudioSlugs, listRelatedAudio, listAudioBySameSpeaker } from "@/repositories/audio-repository";
+import { listRelatedAudio, listAudioBySameSpeaker } from "@/repositories/audio-repository";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/typography";
@@ -19,11 +26,6 @@ import { RelatedAudioList } from "@/features/player/components/player-related";
 
 export const revalidate = 60;
 export const dynamicParams = true;
-
-export async function generateStaticParams() {
-  const slugs = await listPublishedAudioSlugs();
-  return slugs.map((slug) => ({ slug }));
-}
 
 function buildJsonLd(audio: {
   id: string;
@@ -159,7 +161,16 @@ export async function generateMetadata({
           description,
           type: "article",
           url,
-          images: ogImage ? [{ url: absoluteUrl(ogImage), width: OG_IMAGE_WIDTH, height: OG_IMAGE_HEIGHT, alt: audio.judul }] : undefined,
+          images: ogImage
+            ? [
+                {
+                  url: absoluteUrl(ogImage),
+                  width: OG_IMAGE_WIDTH,
+                  height: OG_IMAGE_HEIGHT,
+                  alt: audio.judul,
+                },
+              ]
+            : undefined,
         },
         ogImage,
       ),
@@ -207,7 +218,9 @@ export default async function AudioDetailPage({ params }: { params: Promise<{ sl
   const speakerIds = audio.series.speakers.map((s) => s.speaker.id);
   const [seriesRelated, speakerRelated] = await Promise.all([
     listRelatedAudio(audio.series.id, audio.id, 4),
-    speakerIds.length > 0 ? listAudioBySameSpeaker(speakerIds, audio.series.id, 4) : Promise.resolve([]),
+    speakerIds.length > 0
+      ? listAudioBySameSpeaker(speakerIds, audio.series.id, 4)
+      : Promise.resolve([]),
   ]);
   const relatedAudios = [
     ...seriesRelated,
@@ -244,7 +257,11 @@ export default async function AudioDetailPage({ params }: { params: Promise<{ sl
         </div>
 
         <PlayerErrorBoundary>
-          <PlayerProvider autoInitialize elementId="yt-player-full" source={resolvedSource ?? undefined}>
+          <PlayerProvider
+            autoInitialize
+            elementId="yt-player-full"
+            source={resolvedSource ?? undefined}
+          >
             <OfflineBanner />
             <PlayerFull audio={audio} sessions={sessions} />
           </PlayerProvider>

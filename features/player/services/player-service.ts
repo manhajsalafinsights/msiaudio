@@ -10,6 +10,11 @@ import type {
 import * as audioRepository from "@/repositories/audio-repository";
 import type { AudioDetail } from "@/repositories/audio-repository";
 
+/** Sumber ringan satu item queue player (tanpa include series/speaker penuh). */
+type PlayerQueueSource = Awaited<
+  ReturnType<typeof audioRepository.listPublishedAudioQueueBySeries>
+>[number];
+
 /**
  * Prioritas provider audio.
  * Provider di urutan atas dipilih terlebih dahulu.
@@ -212,13 +217,32 @@ export function toPlayerAudio(audio: AudioDetail): PlayerAudio {
 
 /**
  * Build queue dari daftar audio dalam satu series.
+ * Menerima item ringan (tanpa include nested) + metadata series yang sama
+ * untuk seluruh item, sehingga queue tidak perlu fetch ulang series per baris.
  */
 export function buildPlayerQueue(
-  allAudio: AudioDetail[],
+  allAudio: PlayerQueueSource[],
   currentAudioId: string,
+  series: PlayerAudio["series"],
 ): { queue: PlayerQueueItem[]; currentQueueIndex: number } {
   const playerAudios = allAudio.map((audio, index) => ({
-    audio: toPlayerAudio(audio),
+    audio: {
+      id: audio.id,
+      slug: audio.slug,
+      judul: audio.judul,
+      deskripsi: audio.deskripsi,
+      durasi: audio.durasi,
+      cover: audio.cover,
+      nomorSesi: audio.nomorSesi,
+      createdAt: audio.createdAt,
+      updatedAt: audio.updatedAt,
+      series,
+      mediaSources: audio.mediaSources.map((ms) => ({
+        provider: ms.provider,
+        url: ms.url,
+        providerId: ms.providerId,
+      })),
+    } satisfies PlayerAudio,
     position: index,
   }));
 
@@ -250,8 +274,12 @@ export const getPlayerContext = cache(async (audioSlug: string): Promise<PlayerC
   const audio = await audioRepository.findPublishedAudioBySlug(audioSlug);
   if (!audio) throw new NotFoundError("Audio tidak ditemukan");
 
-  const allAudio = await audioRepository.listPublishedAudioBySeries(audio.seriesId);
-  const { queue, currentQueueIndex } = buildPlayerQueue(allAudio as AudioDetail[], audio.id);
+  const allAudio = await audioRepository.listPublishedAudioQueueBySeries(audio.seriesId);
+  const { queue, currentQueueIndex } = buildPlayerQueue(
+    allAudio,
+    audio.id,
+    toPlayerAudio(audio).series,
+  );
 
   const mediaSources: MediaSource[] = audio.mediaSources.map((ms) => ({
     provider: ms.provider,

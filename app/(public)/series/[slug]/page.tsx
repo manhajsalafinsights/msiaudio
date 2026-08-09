@@ -4,12 +4,19 @@ import { notFound } from "next/navigation";
 import { Clock, ListMusic, BookOpen } from "lucide-react";
 import { formatDurationHuman } from "@/utils/duration";
 import { site } from "@/lib/config/site";
-import { absoluteUrl, buildBreadcrumbJsonLd, buildOpenGraph, buildTwitter, canonicalUrl, OG_IMAGE_WIDTH, OG_IMAGE_HEIGHT } from "@/lib/seo";
+import {
+  absoluteUrl,
+  buildBreadcrumbJsonLd,
+  buildOpenGraph,
+  buildTwitter,
+  canonicalUrl,
+  OG_IMAGE_WIDTH,
+  OG_IMAGE_HEIGHT,
+} from "@/lib/seo";
 import { NotFoundError } from "@/lib/errors/app-error";
 import { getSeriesBySlug } from "@/services/series-service";
 import { getRelatedSeries } from "@/services/series-service";
 import { getSeriesAudioList } from "@/services/audio-service";
-import { listPublishedSeriesSlugs } from "@/repositories/series-repository";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,11 +31,6 @@ import { FavoriteButton } from "@/features/favorite/favorite-button";
 
 export const revalidate = 60;
 export const dynamicParams = true;
-
-export async function generateStaticParams() {
-  const slugs = await listPublishedSeriesSlugs();
-  return slugs.map((slug) => ({ slug }));
-}
 
 export async function generateMetadata({
   params,
@@ -55,7 +57,14 @@ export async function generateMetadata({
           type: "website",
           url,
           images: series.cover
-            ? [{ url: absoluteUrl(series.cover), width: OG_IMAGE_WIDTH, height: OG_IMAGE_HEIGHT, alt: series.judul }]
+            ? [
+                {
+                  url: absoluteUrl(series.cover),
+                  width: OG_IMAGE_WIDTH,
+                  height: OG_IMAGE_HEIGHT,
+                  alt: series.judul,
+                },
+              ]
             : undefined,
         },
         series.cover,

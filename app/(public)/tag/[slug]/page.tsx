@@ -5,7 +5,6 @@ import { Suspense } from "react";
 import { Hash } from "lucide-react";
 import { buildBreadcrumbJsonLd, buildOpenGraph, buildTwitter, canonicalUrl } from "@/lib/seo";
 import { findPublishedTagBySlug } from "@/repositories/tag-repository";
-import { listPublishedTagSlugs } from "@/repositories/tag-repository";
 import { getFilteredAudioList } from "@/services/search-service";
 import { Container } from "@/components/ui/container";
 import { Heading, Text } from "@/components/ui/typography";
@@ -19,11 +18,6 @@ import { Pagination } from "@/components/shared/pagination";
 
 export const revalidate = 60;
 export const dynamicParams = true;
-
-export async function generateStaticParams() {
-  const slugs = await listPublishedTagSlugs();
-  return slugs.map((slug) => ({ slug }));
-}
 
 const AUDIO_PER_PAGE = 20;
 const SERIES_PREVIEW = 6;
@@ -107,12 +101,7 @@ export default async function TagDetailPage({
   return (
     <Container size="wide" className="flex flex-col gap-8 py-8">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: breadcrumbJsonLd }} />
-      <Breadcrumb
-        items={[
-          { label: "Beranda", href: "/" },
-          { label: `#${tag.nama}` },
-        ]}
-      />
+      <Breadcrumb items={[{ label: "Beranda", href: "/" }, { label: `#${tag.nama}` }]} />
 
       <div className="flex items-center gap-3">
         <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-brand/10 text-brand">

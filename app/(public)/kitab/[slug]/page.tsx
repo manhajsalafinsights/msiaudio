@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { BookOpen } from "lucide-react";
 import { buildBreadcrumbJsonLd, buildOpenGraph, buildTwitter, canonicalUrl } from "@/lib/seo";
 import { findPublishedSeriesTypeBySlug } from "@/repositories/series-type-repository";
-import { listPublishedSeriesTypeSlugs } from "@/repositories/series-type-repository";
 import { Container } from "@/components/ui/container";
 import { Heading, Text } from "@/components/ui/typography";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -12,11 +11,6 @@ import { SeriesRow } from "@/components/shared/series-row";
 
 export const revalidate = 60;
 export const dynamicParams = true;
-
-export async function generateStaticParams() {
-  const slugs = await listPublishedSeriesTypeSlugs();
-  return slugs.map((slug) => ({ slug }));
-}
 
 export async function generateMetadata({
   params,
@@ -48,11 +42,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function KitabDetailPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function KitabDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const kitab = await findPublishedSeriesTypeBySlug(slug);
   if (!kitab) notFound();

@@ -2,9 +2,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { Mic } from "lucide-react";
-import { absoluteUrl, buildBreadcrumbJsonLd, buildOpenGraph, buildTwitter, canonicalUrl } from "@/lib/seo";
+import {
+  absoluteUrl,
+  buildBreadcrumbJsonLd,
+  buildOpenGraph,
+  buildTwitter,
+  canonicalUrl,
+} from "@/lib/seo";
 import { findPublishedSpeakerBySlug } from "@/repositories/speaker-repository";
-import { listPublishedSpeakerSlugs } from "@/repositories/speaker-repository";
 import { Container } from "@/components/ui/container";
 import { Heading, Text } from "@/components/ui/typography";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -13,11 +18,6 @@ import { SeriesCard } from "@/components/shared/series-card";
 
 export const revalidate = 60;
 export const dynamicParams = true;
-
-export async function generateStaticParams() {
-  const slugs = await listPublishedSpeakerSlugs();
-  return slugs.map((slug) => ({ slug }));
-}
 
 export async function generateMetadata({
   params,
@@ -42,7 +42,9 @@ export async function generateMetadata({
         description: pemateri.bio ?? `${pemateri.series.length} series kajian di MSI Audio.`,
         type: "profile",
         url,
-        images: pemateri.foto ? [{ url: absoluteUrl(pemateri.foto), alt: pemateri.nama }] : undefined,
+        images: pemateri.foto
+          ? [{ url: absoluteUrl(pemateri.foto), alt: pemateri.nama }]
+          : undefined,
       },
       pemateri.foto,
     ),
