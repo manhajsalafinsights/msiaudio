@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma/client";
 export async function GET(request: Request) {
   const user = await getCurrentUser();
   if (!user) {
-    return NextResponse.json({ completed: {} });
+    return NextResponse.json({ status: {} });
   }
 
   const { searchParams } = new URL(request.url);
@@ -16,18 +16,18 @@ export async function GET(request: Request) {
     .filter(Boolean);
 
   if (!audioIds?.length) {
-    return NextResponse.json({ completed: {} });
+    return NextResponse.json({ status: {} });
   }
 
   const rows = await prisma.listeningHistory.findMany({
     where: { userId: user.id, audioId: { in: audioIds } },
-    select: { audioId: true, completed: true },
+    select: { audioId: true, completed: true, progressPercent: true },
   });
 
-  const completed: Record<string, boolean> = {};
+  const status: Record<string, { completed: boolean; progressPercent: number }> = {};
   for (const row of rows) {
-    completed[row.audioId] = row.completed;
+    status[row.audioId] = { completed: row.completed, progressPercent: row.progressPercent };
   }
 
-  return NextResponse.json({ completed });
+  return NextResponse.json({ status });
 }

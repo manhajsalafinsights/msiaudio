@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     const progress = await prisma.userProgress.findUnique({
       where: { userId_seriesId: { userId: user.id, seriesId } },
       include: {
-        lastAudio: { select: { id: true, judul: true, slug: true } },
+        lastAudio: { select: { id: true, judul: true, slug: true, nomorSesi: true } },
         series: { select: { judul: true, slug: true } },
       },
     });

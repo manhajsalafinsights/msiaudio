@@ -10,18 +10,15 @@ import { getSeriesBySlug } from "@/services/series-service";
 import { getRelatedSeries } from "@/services/series-service";
 import { getSeriesAudioList } from "@/services/audio-service";
 import { listPublishedSeriesSlugs } from "@/repositories/series-repository";
-import { getProgress } from "@/repositories/progress-repository";
-import { getListeningByAudioIds } from "@/repositories/progress-repository";
-import { getCurrentUser } from "@/lib/auth/session";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ProgressBar } from "@/components/ui/progress-bar";
 import { Heading, Text } from "@/components/ui/typography";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { Cover } from "@/components/shared/cover";
-import { SessionRow } from "@/components/shared/session-row";
 import { SeriesCard } from "@/components/shared/series-card";
+import { SeriesSessionList } from "@/components/shared/series-session-list";
+import { SeriesPlayButton, SeriesProgressCard } from "@/components/shared/series-progress";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FavoriteButton } from "@/features/favorite/favorite-button";
 
@@ -128,7 +125,7 @@ export default async function SeriesDetailPage({ params }: { params: Promise<{ s
     throw error;
   }
 
-  const [audioList, relatedSeries, user] = await Promise.all([
+  const [audioList, relatedSeries] = await Promise.all([
     getSeriesAudioList(series.id),
     getRelatedSeries(
       {
@@ -138,20 +135,7 @@ export default async function SeriesDetailPage({ params }: { params: Promise<{ s
       },
       6,
     ),
-    getCurrentUser(),
   ]);
-
-  const seriesProgress = user ? await getProgress(user.id, series.id) : null;
-  const listeningMap = new Map<string, { completed: boolean; progressPercent: number }>();
-  if (user && audioList.length > 0) {
-    const rows = await getListeningByAudioIds(
-      user.id,
-      audioList.map((a) => a.id),
-    );
-    for (const row of rows) {
-      listeningMap.set(row.audioId, row);
-    }
-  }
 
   const speakerNames = series.speakers.map((s) => s.speaker.nama).join(", ");
   const jsonLd = buildJsonLd(series);
@@ -160,13 +144,6 @@ export default async function SeriesDetailPage({ params }: { params: Promise<{ s
     { label: "Series", href: "/series" },
     { label: series.judul },
   ]);
-  const progressPercent = seriesProgress ? Math.round(seriesProgress.progressPercent) : 0;
-  const lastAudio = seriesProgress?.lastAudioId
-    ? audioList.find((a) => a.id === seriesProgress.lastAudioId)
-    : null;
-  const primaryCta = seriesProgress && progressPercent > 0 && progressPercent < 100 && lastAudio
-    ? { href: `/audio/${lastAudio.slug}`, label: `Lanjutkan Sesi ${lastAudio.nomorSesi}` }
-    : { href: audioList[0] ? `/audio/${audioList[0].slug}` : "#", label: "Mulai dari Awal" };
 
   return (
     <>
@@ -233,29 +210,20 @@ export default async function SeriesDetailPage({ params }: { params: Promise<{ s
               </span>
             </div>
 
-            {seriesProgress && progressPercent > 0 && (
-              <div className="flex max-w-md flex-col gap-2 rounded-xl border border-border bg-surface p-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-foreground">Progress Anda</span>
-                  <span className="text-brand">
-                    {progressPercent}% selesai · {seriesProgress.completedCount} /{" "}
-                    {series.totalSesi} sesi
-                  </span>
-                </div>
-                <ProgressBar value={progressPercent} />
-              </div>
-            )}
+            <SeriesProgressCard seriesId={series.id} totalSesi={series.totalSesi} />
 
             {series.deskripsi && (
               <p className="max-w-2xl leading-relaxed text-foreground/80">{series.deskripsi}</p>
             )}
 
             <div className="flex flex-wrap gap-3">
-              <Button asChild disabled={!audioList.length}>
-                <Link href={primaryCta.href}>
-                  {audioList.length > 0 ? primaryCta.label : "Belum ada sesi"}
-                </Link>
-              </Button>
+              {audioList.length > 0 ? (
+                <SeriesPlayButton seriesId={series.id} firstAudioSlug={audioList[0].slug} />
+              ) : (
+                <Button asChild disabled>
+                  <Link href="#">Belum ada sesi</Link>
+                </Button>
+              )}
               <FavoriteButton seriesId={series.id} />
             </div>
           </div>
@@ -264,20 +232,7 @@ export default async function SeriesDetailPage({ params }: { params: Promise<{ s
         <section className="flex flex-col gap-4">
           <Heading as="h2">Daftar Sesi</Heading>
           {audioList.length > 0 ? (
-            <ul className="flex flex-col gap-3">
-              {audioList.map((audio) => {
-                const listening = listeningMap.get(audio.id);
-                return (
-                  <SessionRow
-                    key={audio.id}
-                    audio={audio}
-                    nomor={audio.nomorSesi}
-                    completed={listening?.completed}
-                    progressPercent={listening?.progressPercent}
-                  />
-                );
-              })}
-            </ul>
+            <SeriesSessionList audioList={audioList} />
           ) : (
             <EmptyState
               title="Belum ada sesi"

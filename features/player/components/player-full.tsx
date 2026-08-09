@@ -77,9 +77,15 @@ export function PlayerFull({ audio, sessions, completedSessions }: PlayerFullPro
     let cancelled = false;
     const ids = sessions.map((s) => s.id).join(",");
     fetch(`/api/listening?audioIds=${ids}`)
-      .then((res) => (res.ok ? res.json() : { completed: {} }))
-      .then((data: { completed?: Record<string, boolean> }) => {
-        if (!cancelled) setListeningStatus(data.completed ?? {});
+      .then((res) => (res.ok ? res.json() : { status: {} }))
+      .then((data: { status?: Record<string, { completed: boolean }> }) => {
+        if (!cancelled) {
+          const map: Record<string, boolean> = {};
+          for (const [id, s] of Object.entries(data.status ?? {})) {
+            map[id] = s.completed;
+          }
+          setListeningStatus(map);
+        }
       })
       .catch(() => {});
     return () => {
