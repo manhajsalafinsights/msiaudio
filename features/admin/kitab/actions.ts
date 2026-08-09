@@ -30,12 +30,19 @@ export async function createKitab(input: KitabFormInput): Promise<ActionState> {
         slug,
         icon: data.icon || null,
         description: data.description || null,
+        isKitab: data.isKitab,
       },
     });
 
     return { ok: true, data: undefined };
   } catch (error) {
-    return { ok: false, error: { code: "UNKNOWN_ERROR", message: error instanceof Error ? error.message : "Gagal membuat kitab" } };
+    return {
+      ok: false,
+      error: {
+        code: "UNKNOWN_ERROR",
+        message: error instanceof Error ? error.message : "Gagal membuat kitab",
+      },
+    };
   }
 }
 
@@ -56,12 +63,35 @@ export async function updateKitab(id: string, input: KitabFormInput): Promise<Ac
         slug,
         icon: data.icon || null,
         description: data.description || null,
+        isKitab: data.isKitab,
       },
     });
 
     return { ok: true, data: undefined };
   } catch (error) {
-    return { ok: false, error: { code: "UNKNOWN_ERROR", message: error instanceof Error ? error.message : "Gagal memperbarui kitab" } };
+    return {
+      ok: false,
+      error: {
+        code: "UNKNOWN_ERROR",
+        message: error instanceof Error ? error.message : "Gagal memperbarui kitab",
+      },
+    };
+  }
+}
+
+export async function setKitabIsKitab(id: string, isKitab: boolean): Promise<ActionState> {
+  try {
+    await requireAdmin();
+    await prisma.seriesType.update({ where: { id }, data: { isKitab } });
+    return { ok: true, data: undefined };
+  } catch (error) {
+    return {
+      ok: false,
+      error: {
+        code: "UNKNOWN_ERROR",
+        message: error instanceof Error ? error.message : "Gagal mengubah tampilan kitab",
+      },
+    };
   }
 }
 
@@ -84,7 +114,8 @@ export async function deleteKitab(id: string): Promise<ActionState> {
 export async function bulkDeleteKitab(ids: string[]): Promise<ActionState> {
   try {
     await requireAdmin();
-    if (ids.length === 0) return { ok: false, error: { code: "VALIDATION_ERROR", message: "Tidak ada data dipilih" } };
+    if (ids.length === 0)
+      return { ok: false, error: { code: "VALIDATION_ERROR", message: "Tidak ada data dipilih" } };
 
     const used = await prisma.series.findMany({
       where: { seriesTypeId: { in: ids } },
@@ -101,11 +132,20 @@ export async function bulkDeleteKitab(ids: string[]): Promise<ActionState> {
     if (blocked > 0) {
       return {
         ok: false,
-        error: { code: "CONFLICT", message: `${blocked} kitab tidak dapat dihapus karena masih dipakai series` },
+        error: {
+          code: "CONFLICT",
+          message: `${blocked} kitab tidak dapat dihapus karena masih dipakai series`,
+        },
       };
     }
     return { ok: true, data: undefined };
   } catch (error) {
-    return { ok: false, error: { code: "UNKNOWN_ERROR", message: error instanceof Error ? error.message : "Gagal menghapus" } };
+    return {
+      ok: false,
+      error: {
+        code: "UNKNOWN_ERROR",
+        message: error instanceof Error ? error.message : "Gagal menghapus",
+      },
+    };
   }
 }

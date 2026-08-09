@@ -79,10 +79,11 @@ export type SeriesTypePublic = {
   seriesCount: number;
 };
 
-/** Kitab (SeriesType) yang punya ≥1 series published — untuk /kitab. */
+/** Kitab (SeriesType) yang punya ≥1 series published — untuk /kitab & Pilihan Kitab.
+ *  Hanya tipe isKitab (kajian berbasis kitab) yang tampil; tematik & lainnya tidak. */
 export async function listPublishedSeriesTypes(): Promise<SeriesTypePublic[]> {
   const rows = await prisma.seriesType.findMany({
-    where: { series: { some: { published: true } } },
+    where: { isKitab: true, series: { some: { published: true } } },
     select: {
       id: true,
       nama: true,

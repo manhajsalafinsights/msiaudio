@@ -32,7 +32,14 @@ export function KitabForm({ defaultValues, kitabId }: KitabFormProps) {
     formState: { errors },
   } = useForm<KitabFormInput>({
     resolver: zodResolver(kitabFormSchema),
-    defaultValues: { nama: "", slug: "", icon: "", description: "", ...defaultValues },
+    defaultValues: {
+      nama: "",
+      slug: "",
+      icon: "",
+      description: "",
+      isKitab: true,
+      ...defaultValues,
+    },
   });
 
   const onSubmit = (values: KitabFormInput) => {
@@ -50,7 +57,10 @@ export function KitabForm({ defaultValues, kitabId }: KitabFormProps) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex max-w-2xl flex-col gap-5">
       {formError && (
-        <div role="alert" className="rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
+        <div
+          role="alert"
+          className="rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger"
+        >
           {formError}
         </div>
       )}
@@ -67,7 +77,11 @@ export function KitabForm({ defaultValues, kitabId }: KitabFormProps) {
         />
       </FormField>
 
-      <FormField label="Slug" hint="Kosongkan untuk membuat otomatis dari nama" error={errors.slug?.message}>
+      <FormField
+        label="Slug"
+        hint="Kosongkan untuk membuat otomatis dari nama"
+        error={errors.slug?.message}
+      >
         <div className="flex gap-2">
           <Input
             {...register("slug")}
@@ -98,7 +112,30 @@ export function KitabForm({ defaultValues, kitabId }: KitabFormProps) {
       </FormField>
 
       <FormField label="Deskripsi" error={errors.description?.message}>
-        <Textarea {...register("description")} rows={4} placeholder="Deskripsi kitab..." invalid={!!errors.description} />
+        <Textarea
+          {...register("description")}
+          rows={4}
+          placeholder="Deskripsi kitab..."
+          invalid={!!errors.description}
+        />
+      </FormField>
+
+      <FormField
+        label="Tampil di Pilihan Kitab"
+        hint="Nonaktifkan untuk tipe bukan kajian kitab (tematik, kajian singkat, dll.)"
+      >
+        <label className="flex cursor-pointer items-center gap-3">
+          <input
+            type="checkbox"
+            {...register("isKitab")}
+            className="h-4 w-4 accent-[var(--brand)]"
+          />
+          <span className="text-sm text-muted">
+            {getValues("isKitab")
+              ? "Ya, muncul di Pilihan Kitab"
+              : "Tidak, sembunyikan dari Pilihan Kitab"}
+          </span>
+        </label>
       </FormField>
 
       <div className="flex gap-2">

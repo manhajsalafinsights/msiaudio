@@ -14,6 +14,7 @@ export const kitabFormSchema = z.object({
     .max(500)
     .refine((v) => v === "" || z.url().safeParse(v).success, "URL icon tidak valid"),
   description: z.string().trim().max(2000, "Maksimal 2000 karakter"),
+  isKitab: z.boolean(),
 });
 
 export type KitabFormInput = z.infer<typeof kitabFormSchema>;

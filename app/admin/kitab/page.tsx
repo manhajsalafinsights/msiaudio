@@ -28,6 +28,7 @@ export default async function AdminKitabPage({
     slug: k.slug,
     icon: k.icon,
     description: k.description,
+    isKitab: k.isKitab,
     _count: { series: k._count.series },
   }));
 

@@ -5,14 +5,22 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { DataTableToolbar } from "@/components/admin/data-table";
 import { Pagination } from "@/components/admin/pagination";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { useRowSelection } from "@/components/admin/use-row-selection";
 import { useAdminAction } from "@/features/admin/lib/use-admin-action";
-import { deleteKitab, bulkDeleteKitab } from "@/features/admin/kitab/actions";
+import { deleteKitab, bulkDeleteKitab, setKitabIsKitab } from "@/features/admin/kitab/actions";
 
 interface KitabRow {
   id: string;
@@ -20,6 +28,7 @@ interface KitabRow {
   slug: string;
   icon: string | null;
   description: string | null;
+  isKitab: boolean;
   _count: { series: number };
 }
 
@@ -41,7 +50,10 @@ export function KitabTable({ rows, total, totalPages, page }: KitabTableProps) {
     <div className="flex flex-col gap-4">
       <div className="rounded-xl border border-border bg-surface">
         {error && (
-          <div role="alert" className="border-b border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
+          <div
+            role="alert"
+            className="border-b border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger"
+          >
             {error}
           </div>
         )}
@@ -50,7 +62,12 @@ export function KitabTable({ rows, total, totalPages, page }: KitabTableProps) {
           {selected.length > 0 && (
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted">{selected.length} dipilih</span>
-              <Button size="sm" variant="danger" disabled={pending} onClick={() => setBulkDeleteOpen(true)}>
+              <Button
+                size="sm"
+                variant="danger"
+                disabled={pending}
+                onClick={() => setBulkDeleteOpen(true)}
+              >
                 Hapus
               </Button>
             </div>
@@ -71,13 +88,14 @@ export function KitabTable({ rows, total, totalPages, page }: KitabTableProps) {
               </TableHead>
               <TableHead>Nama</TableHead>
               <TableHead>Series</TableHead>
+              <TableHead>Pilihan Kitab</TableHead>
               <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="py-10 text-center text-muted">
+                <TableCell colSpan={5} className="py-10 text-center text-muted">
                   Tidak ada data
                 </TableCell>
               </TableRow>
@@ -96,7 +114,13 @@ export function KitabTable({ rows, total, totalPages, page }: KitabTableProps) {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       {row.icon ? (
-                        <Image src={row.icon} alt="" width={36} height={36} className="h-9 w-9 rounded-lg object-cover" />
+                        <Image
+                          src={row.icon}
+                          alt=""
+                          width={36}
+                          height={36}
+                          className="h-9 w-9 rounded-lg object-cover"
+                        />
                       ) : (
                         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10 text-xs font-bold text-brand">
                           {row.nama.charAt(0).toUpperCase()}
@@ -110,13 +134,34 @@ export function KitabTable({ rows, total, totalPages, page }: KitabTableProps) {
                   </TableCell>
                   <TableCell className="text-muted">{row._count.series}</TableCell>
                   <TableCell>
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => run(() => setKitabIsKitab(row.id, !row.isKitab))}
+                      aria-label={
+                        row.isKitab
+                          ? "Sembunyikan dari Pilihan Kitab"
+                          : "Tampilkan di Pilihan Kitab"
+                      }
+                    >
+                      <Badge variant={row.isKitab ? "success" : "warning"}>
+                        {row.isKitab ? "Kitab" : "Non-kitab"}
+                      </Badge>
+                    </button>
+                  </TableCell>
+                  <TableCell>
                     <div className="flex items-center justify-end gap-1">
                       <Button size="icon" variant="ghost" asChild aria-label="Edit">
                         <Link href={`/admin/kitab/${row.id}/edit`}>
                           <Pencil className="h-4 w-4" />
                         </Link>
                       </Button>
-                      <Button size="icon" variant="ghost" aria-label="Hapus" onClick={() => setDeleteTarget(row)}>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        aria-label="Hapus"
+                        onClick={() => setDeleteTarget(row)}
+                      >
                         <Trash2 className="h-4 w-4 text-danger" />
                       </Button>
                     </div>
@@ -137,7 +182,11 @@ export function KitabTable({ rows, total, totalPages, page }: KitabTableProps) {
         description={`"${deleteTarget?.nama}" akan dihapus permanen.`}
         pending={pending}
         onConfirm={() =>
-          deleteTarget && run(() => deleteKitab(deleteTarget.id), () => setDeleteTarget(null))
+          deleteTarget &&
+          run(
+            () => deleteKitab(deleteTarget.id),
+            () => setDeleteTarget(null),
+          )
         }
       />
 
@@ -147,7 +196,15 @@ export function KitabTable({ rows, total, totalPages, page }: KitabTableProps) {
         title="Hapus data terpilih?"
         description={`${selected.length} kitab akan dihapus permanen.`}
         pending={pending}
-        onConfirm={() => run(() => bulkDeleteKitab(selected), () => { clear(); setBulkDeleteOpen(false); })}
+        onConfirm={() =>
+          run(
+            () => bulkDeleteKitab(selected),
+            () => {
+              clear();
+              setBulkDeleteOpen(false);
+            },
+          )
+        }
       />
     </div>
   );

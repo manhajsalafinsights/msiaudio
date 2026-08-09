@@ -248,6 +248,7 @@ model SeriesType {
   slug        String   @unique
   icon        String?
   description String?
+  isKitab     Boolean  @default(true)
   createdAt   DateTime @default(now())
 
   series Series[]
