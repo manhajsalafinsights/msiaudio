@@ -1,0 +1,645 @@
+// ============================================================
+// MSI Audio — Prisma Schema
+// Platform belajar audio kajian Islam (ekosistem Manhaj Salaf)
+//
+// Stack : Next.js + Prisma + PostgreSQL (Supabase) + Vercel
+// Prinsip: Supabase HANYA menyimpan metadata.
+//          Audio TIDAK disimpan di server.
+//          Sumber audio = provider eksternal (lihat MediaSource).
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------------
+// ENUM
+// ------------------------------------------------------------
+
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+// Status akun user (diperiksa saat login).
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum SpeakerStatus {
+  ACTIVE
+  INACTIVE
+}
+
+// Provider penyimpanan/streaming audio.
+// Tidak ada audio yang disimpan di Supabase — hanya metadata.
+// Tambahan provider baru = tambah nilai enum + migrasi.
+enum MediaProvider {
+  YOUTUBE
+  CLOUDFLARE_R2
+  BUNNY_CDN
+  BACKBLAZE
+  LOCAL_STORAGE
+}
+
+// Status proses transkripsi.
+enum TranscriptStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// Provider/engine transkripsi.
+enum TranscriptProvider {
+  OPENAI
+  WHISPER
+  MANUAL
+}
+
+// Tipe lampiran materi pendukung sebuah audio.
+enum AttachmentType {
+  PDF
+  EBOOK
+  KITAB
+  SLIDE
+  GAMBAR
+  REFERENSI
+  LINK_EKSTERNAL
+}
+
+// Tipe referensi ilmiah yang ditampilkan pada posisi waktu audio.
+enum ReferenceType {
+  QURAN
+  HADITH
+  KITAB
+  ARTICLE
+  QUOTE
+  NOTE
+}
+
+// Target untuk RelatedContent (polimorfik, lintas produk MSI).
+enum RelatedTargetType {
+  ARTICLE
+  EBOOK
+  VIDEO
+  ACADEMY
+  QA
+  EXTERNAL
+}
+
+// ------------------------------------------------------------
+// USER
+// ------------------------------------------------------------
+
+// Field mengikuti konvensi Better Auth (name/image/emailVerified) tetapi
+// kolom DB tetap `nama`/`avatar` (lihat database.md §3.1) via @map.
+// passwordHash lama DIHAPUS — Better Auth menyimpan hash password di
+// tabel Account (kolom password).
+model User {
+  id            String     @id @default(cuid())
+  name          String     @map("nama")
+  email         String     @unique
+  emailVerified Boolean    @default(false)
+  image         String?    @map("avatar")
+  role          Role       @default(USER)
+  status        UserStatus @default(ACTIVE)
+  lastLoginAt   DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  userProgress   UserProgress[]
+  listeningLogs  ListeningHistory[]
+  bookmarks      Bookmark[]
+  notes          Note[]
+  favoriteSeries FavoriteSeries[]
+  sessions       Session[]
+  accounts       Account[]
+
+  @@map("users")
+}
+
+// ------------------------------------------------------------
+// AUTH — Better Auth (Prisma Adapter)
+// Struktur standar Better Auth. Password hash tersimpan di
+// Account.password (bukan User). Jangan ubah field inti ini.
+// ------------------------------------------------------------
+
+model Session {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  userId                String
+  providerId            String
+  accountId             String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  value      String
+  expiresAt  DateTime
+  identifier String
+
+  @@index([identifier, expiresAt])
+  @@map("verifications")
+}
+
+// ------------------------------------------------------------
+// SPEAKER (pemateri — bisa lebih dari satu per Series)
+// ------------------------------------------------------------
+
+model Speaker {
+  id        String        @id @default(cuid())
+  nama      String
+  slug      String        @unique
+  foto      String?
+  bio       String?
+  status    SpeakerStatus @default(ACTIVE)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  series SeriesSpeaker[]
+
+  @@index([status])
+  @@map("speakers")
+}
+
+// ------------------------------------------------------------
+// CATEGORY
+// ------------------------------------------------------------
+
+model Category {
+  id        String   @id @default(cuid())
+  nama      String
+  slug      String   @unique
+  icon      String?
+  createdAt DateTime @default(now())
+
+  series SeriesCategory[]
+
+  @@map("categories")
+}
+
+// ------------------------------------------------------------
+// TAG (filter & pencarian yang lebih detail dari kategori)
+// ------------------------------------------------------------
+
+model Tag {
+  id        String   @id @default(cuid())
+  nama      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  series SeriesTag[]
+
+  @@map("tags")
+}
+
+// ------------------------------------------------------------
+// SERIES_TYPE (jenis program belajar)
+// Tidak semua Series adalah kajian kitab.
+// Contoh: kajian kitab, dauroh, podcast, seminar, tematik, ramadhan.
+// ------------------------------------------------------------
+
+model SeriesType {
+  id          String   @id @default(cuid())
+  nama        String
+  slug        String   @unique
+  icon        String?
+  description String?
+  createdAt   DateTime @default(now())
+
+  series Series[]
+
+  @@map("series_types")
+}
+
+// ------------------------------------------------------------
+// SERIES (pengganti Playlist — kumpulan materi belajar)
+// totalSesi & totalDurasi sengaja di-DENORMALISASI
+// untuk list "banyak series" tanpa COUNT() tiap request.
+// ------------------------------------------------------------
+
+model Series {
+  id           String   @id @default(cuid())
+  judul        String
+  slug         String   @unique
+  cover        String?
+  deskripsi    String?
+  seriesTypeId String
+  totalSesi    Int      @default(0)
+  totalDurasi  Int      @default(0)
+  published    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  seriesType     SeriesType       @relation(fields: [seriesTypeId], references: [id], onDelete: Restrict)
+  audio          Audio[]
+  speakers       SeriesSpeaker[]
+  categories     SeriesCategory[]
+  tags           SeriesTag[]
+  userProgress   UserProgress[]
+  favoriteSeries FavoriteSeries[]
+  relatedContent RelatedContent[]
+
+  @@index([published, createdAt])
+  @@index([seriesTypeId, published])
+  @@map("series")
+}
+
+// ------------------------------------------------------------
+// AUDIO (satu kajian/sesi)
+// TIDAK ada kolom youtube_url / url audio DI SINI.
+// URL audio ada di tabel MediaSource.
+// ------------------------------------------------------------
+
+model Audio {
+  id        String   @id @default(cuid())
+  seriesId  String
+  nomorSesi Int
+  judul     String
+  slug      String   @unique
+  deskripsi String?
+  durasi    Int // detik
+  cover     String?
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  series          Series          @relation(fields: [seriesId], references: [id], onDelete: Restrict)
+  mediaSources    MediaSource[]
+  transcripts     Transcript[]
+  attachments     Attachment[]
+  references      Reference[]
+  highlights      Highlight[]
+  chapters        Chapter[]
+  bookmarks       Bookmark[]
+  notes           Note[]
+  listeningLogs   ListeningHistory[]
+  progressAsLast  UserProgress[]
+
+  @@unique([seriesId, nomorSesi])
+  @@index([seriesId, published, nomorSesi])
+  @@index([published, createdAt])
+  @@map("audio")
+}
+
+// ------------------------------------------------------------
+// MEDIA_SOURCE (abstraksi provider audio)
+// Future-proof: ganti provider tanpa mengubah data audio.
+// provider = youtube | cloudflare_r2 | bunny_cdn | backblaze | local_storage
+// providerId = identitas di provider (mis. video ID YouTube).
+// ------------------------------------------------------------
+
+model MediaSource {
+  id         String        @id @default(cuid())
+  audioId    String
+  provider   MediaProvider
+  providerId String
+  url        String
+  metadata   Json? // tambahan: thumbnail, title asli, bitrate, dst.
+  createdAt  DateTime      @default(now())
+
+  audio Audio @relation(fields: [audioId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId])
+  @@index([audioId])
+  @@map("media_sources")
+}
+
+// ------------------------------------------------------------
+// TRANSCRIPT (transkrip isi kajian — disiapkan dari awal)
+// Tujuan di masa depan: subtitle, AI search, ringkasan AI,
+// pencarian isi kajian, highlight kata, terjemahan.
+// Satu transkrip per (audio, language).
+// ------------------------------------------------------------
+
+model Transcript {
+  id        String             @id @default(cuid())
+  audioId   String
+  language  String             @default("id")
+  provider  TranscriptProvider
+  content   String? // null saat masih pending/processing
+  status    TranscriptStatus   @default(PENDING)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  audio Audio @relation(fields: [audioId], references: [id], onDelete: Cascade)
+
+  @@unique([audioId, language])
+  @@index([audioId, status])
+  @@map("transcripts")
+}
+
+// ------------------------------------------------------------
+// ATTACHMENT (lampiran materi pendukung sebuah audio)
+// Contoh: PDF, ebook, kitab, slide, gambar, referensi, link.
+// ------------------------------------------------------------
+
+model Attachment {
+  id        String         @id @default(cuid())
+  audioId   String
+  type      AttachmentType
+  title     String
+  url       String
+  fileSize  Int? // byte; null untuk link eksternal
+  createdAt DateTime       @default(now())
+
+  audio Audio @relation(fields: [audioId], references: [id], onDelete: Cascade)
+
+  @@index([audioId, type])
+  @@map("attachments")
+}
+
+// ------------------------------------------------------------
+// REFERENCE (referensi ilmiah pada posisi waktu tertentu)
+// Ditampilkan saat audio diputar: dalil, hadits, kitab, dst.
+// endSecond opsional: null berarti penanda TITIK (end = start).
+// ------------------------------------------------------------
+
+model Reference {
+  id          String        @id @default(cuid())
+  audioId     String
+  startSecond Int
+  endSecond   Int?
+  type        ReferenceType
+  title       String?
+  reference   String? // kutipan rujukan, mis. "HR. Bukhari no. 52"
+  content     String?
+  createdAt   DateTime      @default(now())
+
+  audio Audio @relation(fields: [audioId], references: [id], onDelete: Cascade)
+
+  @@index([audioId, startSecond])
+  @@map("audio_references") // "references" adalah kata cadangan di SQL
+}
+
+// ------------------------------------------------------------
+// HIGHLIGHT (penanda bagian penting oleh ADMIN)
+// Berbeda dari Bookmark (dibuat user).
+// Contoh: "Faedah Penting", "Kesimpulan", "Peringatan".
+// ------------------------------------------------------------
+
+model Highlight {
+  id          String   @id @default(cuid())
+  audioId     String
+  startSecond Int
+  endSecond   Int?
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+
+  audio Audio @relation(fields: [audioId], references: [id], onDelete: Cascade)
+
+  @@index([audioId, startSecond])
+  @@map("highlights")
+}
+
+// ------------------------------------------------------------
+// CHAPTER (navigasi audio panjang)
+// Contoh: 00:00 Pembukaan · 05:22 Muqaddimah · 18:12 Dalil ...
+// ------------------------------------------------------------
+
+model Chapter {
+  id          String   @id @default(cuid())
+  audioId     String
+  urutan      Int
+  title       String
+  startSecond Int
+  endSecond   Int? // null = sampai akhir audio / start chapter berikutnya
+  createdAt   DateTime @default(now())
+
+  audio Audio @relation(fields: [audioId], references: [id], onDelete: Cascade)
+
+  @@unique([audioId, urutan])
+  @@index([audioId, startSecond])
+  @@map("chapters")
+}
+
+// ------------------------------------------------------------
+// USER_PROGRESS (inti: progress per user per series)
+// Lebih penting daripada Continue Listening.
+// Melacak: audio terakhir, posisi detik, jumlah audio selesai, persen.
+// ------------------------------------------------------------
+
+model UserProgress {
+  id              String   @id @default(cuid())
+  userId          String
+  seriesId        String
+  lastAudioId     String? // audio terakhir; nullable agar audio bisa dihapus
+  positionSeconds Int      @default(0)
+  completedCount  Int      @default(0)
+  progressPercent Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  series    Series  @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  lastAudio Audio?  @relation(fields: [lastAudioId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, seriesId])
+  @@index([userId, updatedAt])
+  @@map("user_progress")
+}
+
+// ------------------------------------------------------------
+// LISTENING_HISTORY (riwayat + state per audio per user)
+// Satu baris per (user, audio). Row diperbarui saat diputar ulang.
+// Bisa untuk: Continue Listening per audio, daftar riwayat,
+// penanda "completed", dan jumlah pemutaran.
+// ------------------------------------------------------------
+
+model ListeningHistory {
+  id              String   @id @default(cuid())
+  userId          String
+  audioId         String
+  positionSeconds Int      @default(0)
+  progressPercent Float    @default(0)
+  completed       Boolean  @default(false)
+  playCount       Int      @default(1)
+  lastPlayedAt    DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  audio Audio @relation(fields: [audioId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, audioId])
+  @@index([userId, lastPlayedAt])
+  @@index([userId, audioId, completed])
+  @@map("listening_history")
+}
+
+// ------------------------------------------------------------
+// BOOKMARK (kajian tersimpan)
+// ------------------------------------------------------------
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  audioId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  audio Audio @relation(fields: [audioId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, audioId])
+  @@index([userId, createdAt])
+  @@map("bookmarks")
+}
+
+// ------------------------------------------------------------
+// NOTE (catatan pribadi per audio, terikat posisi detik)
+// Boleh lebih dari satu catatan per (user, audio).
+// ------------------------------------------------------------
+
+model Note {
+  id              String   @id @default(cuid())
+  userId          String
+  audioId         String
+  positionSeconds Int
+  content         String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  audio Audio @relation(fields: [audioId], references: [id], onDelete: Cascade)
+
+  @@index([userId, audioId])
+  @@index([userId, updatedAt])
+  @@map("notes")
+}
+
+// ------------------------------------------------------------
+// FAVORITE_SERIES (series favorit / diikuti)
+// ------------------------------------------------------------
+
+model FavoriteSeries {
+  id        String   @id @default(cuid())
+  userId    String
+  seriesId  String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  series Series @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, seriesId])
+  @@index([userId, createdAt])
+  @@map("favorite_series")
+}
+
+// ------------------------------------------------------------
+// PIVOT: SERIES <-> SPEAKER
+// Satu series bisa punya banyak pemateri.
+// role: misal "pemateri_utama", "pembahas", dst.
+// ------------------------------------------------------------
+
+model SeriesSpeaker {
+  seriesId  String
+  speakerId String
+  role      String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  series  Series  @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  speaker Speaker @relation(fields: [speakerId], references: [id], onDelete: Cascade)
+
+  @@id([seriesId, speakerId])
+  @@index([speakerId])
+  @@map("series_speakers")
+}
+
+// ------------------------------------------------------------
+// PIVOT: SERIES <-> CATEGORY
+// ------------------------------------------------------------
+
+model SeriesCategory {
+  seriesId   String
+  categoryId String
+  createdAt  DateTime @default(now())
+
+  series   Series   @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([seriesId, categoryId])
+  @@index([categoryId])
+  @@map("series_categories")
+}
+
+// ------------------------------------------------------------
+// PIVOT: SERIES <-> TAG
+// ------------------------------------------------------------
+
+model SeriesTag {
+  seriesId  String
+  tagId     String
+  createdAt DateTime @default(now())
+
+  series Series @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([seriesId, tagId])
+  @@index([tagId])
+  @@map("series_tags")
+}
+
+// ------------------------------------------------------------
+// RELATED_CONTENT (hubungan generic Series → konten lain)
+// Polimorfik: targetType + targetId menunjuk tabel lain TANPA FK.
+// Karena itulah desain ini tidak pernah perlu diubah saat produk
+// MSI bertambah (article, ebook, video, academy, qa, external).
+// ------------------------------------------------------------
+
+model RelatedContent {
+  id         String             @id @default(cuid())
+  seriesId   String
+  targetType RelatedTargetType
+  targetId   String // id konten di produk target; untuk external = URL
+  sortOrder  Int                @default(0)
+  createdAt  DateTime           @default(now())
+
+  series Series @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+
+  @@index([seriesId, sortOrder])
+  @@index([targetType, targetId])
+  @@map("related_contents")
+}

@@ -1,0 +1,8 @@
+node_modules
+.next
+out
+build
+.next-env
+package-lock.json
+**/*.md
+prisma/generated
