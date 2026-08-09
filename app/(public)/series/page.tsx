@@ -96,7 +96,7 @@ export default async function SeriesListPage({
 
       <Suspense
         fallback={
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: PER_PAGE }).map((_, i) => (
               <SeriesCardSkeleton key={i} />
             ))}
@@ -177,7 +177,7 @@ async function SeriesGrid({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
         {result.items.map((series) => {
           const progress = progressMap.get(series.id);
           return (
