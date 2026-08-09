@@ -18,6 +18,7 @@ import { KitabCard } from "@/components/shared/kitab-card";
 import { SectionHeader } from "@/components/shared/section-header";
 import { ContinueLearning } from "@/features/progress/continue-learning";
 import HeroSection from "@/features/home/components/hero-section";
+import HomeStats from "@/features/home/components/home-stats";
 
 export const revalidate = 60;
 
@@ -253,7 +254,7 @@ function DiscoverSection() {
 export default function HomePage() {
   return (
     <>
-      <HeroSection />
+      <HeroSection stats={<HomeStats />} />
       <Container className="py-5">
         <Suspense>
           <ContinueLearning />

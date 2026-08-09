@@ -11,6 +11,12 @@ export async function listActiveSpeakers() {
   });
 }
 
+export async function countActiveSpeakers() {
+  return prisma.speaker.count({
+    where: { status: "ACTIVE" },
+  });
+}
+
 export async function listSpeakersAdmin(opts: {
   q?: string;
   page?: number;

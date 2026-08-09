@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { Play } from "lucide-react";
 
-export default function HeroSection() {
+export default function HeroSection({ stats }: { stats?: ReactNode }) {
   return (
     <section className="relative overflow-hidden">
       <div
@@ -34,10 +35,13 @@ export default function HeroSection() {
 
       <div className="relative mx-auto max-w-5xl px-4 py-14 sm:px-6 md:py-20 lg:px-8">
         <div className="flex flex-col items-center gap-5 text-center">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-surface/70 px-3 py-1 text-xs font-medium text-brand backdrop-blur">
-            <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-brand" />
-            Platform Audio Kajian Islam
-          </span>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-surface/70 px-3 py-1 text-xs font-medium text-brand backdrop-blur">
+              <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-brand" />
+              Platform Audio Kajian Islam
+            </span>
+            {stats}
+          </div>
 
           <h1 className="max-w-2xl text-3xl font-bold leading-tight tracking-tight md:text-5xl md:leading-[1.15]">
             Dengarkan kajian.
