@@ -78,19 +78,21 @@ export default async function SeriesListPage({
         </Text>
       </div>
 
-      <FilterPanel
-        categories={categories}
-        seriesTypes={seriesTypes}
-        speakers={speakers}
-        tags={tags}
-        currentCategory={kategori}
-        currentSeriesType={type}
-        currentSpeaker={ustadz}
-        currentTag={tag}
-        currentSort={sort}
-        currentSearch={q}
-        baseHref="/series"
-      />
+      <div className="sticky top-16 z-20 bg-background/95 py-2 backdrop-blur md:static md:bg-transparent md:py-0 md:backdrop-blur-none">
+        <FilterPanel
+          categories={categories}
+          seriesTypes={seriesTypes}
+          speakers={speakers}
+          tags={tags}
+          currentCategory={kategori}
+          currentSeriesType={type}
+          currentSpeaker={ustadz}
+          currentTag={tag}
+          currentSort={sort}
+          currentSearch={q}
+          baseHref="/series"
+        />
+      </div>
 
       <Suspense
         fallback={
