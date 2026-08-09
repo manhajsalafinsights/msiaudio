@@ -123,7 +123,7 @@ async function SeriesBrowse({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {result.items.map((series) => (
           <SeriesCard key={series.id} series={series} />
         ))}
@@ -357,7 +357,7 @@ export default async function ExplorePage({
           </Button>
         </div>
         {latestSeries.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {latestSeries.map((series) => (
               <SeriesCard key={series.id} series={series} />
             ))}

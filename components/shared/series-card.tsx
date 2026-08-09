@@ -28,7 +28,7 @@ export function SeriesCard({
           {speakerNames && (
             <p className="mt-1 line-clamp-1 text-xs text-muted">{speakerNames}</p>
           )}
-          <div className="mt-2 flex items-center gap-2 text-xs text-muted">
+          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted">
             <span className="inline-flex items-center gap-1">
               <ListMusic className="h-3 w-3" aria-hidden />
               {series.totalSesi} sesi

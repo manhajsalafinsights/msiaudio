@@ -11,7 +11,7 @@ export default function ExploreLoading() {
         <Skeleton className="h-10 w-40" />
         <Skeleton className="h-10 w-32" />
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (
           <Skeleton key={i} className="aspect-[4/3] w-full rounded-lg" />
         ))}
