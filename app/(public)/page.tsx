@@ -6,12 +6,13 @@ import { canonicalUrl } from "@/lib/seo";
 import { getRecentAudio } from "@/services/audio-service";
 import { getSeriesList } from "@/services/series-service";
 import { listCategories } from "@/repositories/category-repository";
-import { listPublishedSeriesTypes, findPublishedSeriesTypeBySlug } from "@/repositories/series-type-repository";
+import {
+  listPublishedSeriesTypes,
+  findPublishedSeriesTypeBySlug,
+} from "@/repositories/series-type-repository";
 import { Container } from "@/components/ui/container";
 import { EmptyState } from "@/components/ui/empty-state";
-import { SeriesCard } from "@/components/shared/series-card";
 import { SeriesCardCompact } from "@/components/shared/series-card-compact";
-import { SeriesCardSkeleton } from "@/components/shared/series-card-skeleton";
 import { AudioRow } from "@/components/shared/audio-row";
 import { AudioRowSkeleton } from "@/components/shared/audio-row-skeleton";
 import { KitabCard } from "@/components/shared/kitab-card";
@@ -108,9 +109,9 @@ function TematikSection() {
       <SectionHeader title="Tematik" moreHref="/kitab/tematik" />
       <Suspense
         fallback={
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <SeriesCardSkeleton key={i} />
+              <div key={i} className="skeleton h-20 rounded-xl" />
             ))}
           </div>
         }
@@ -124,12 +125,14 @@ function TematikSection() {
 async function TematikGrid() {
   const tematik = await findPublishedSeriesTypeBySlug("tematik");
   if (!tematik || tematik.series.length === 0) {
-    return <EmptyState title="Belum ada tematik" description="Kajian tematik akan muncul di sini." />;
+    return (
+      <EmptyState title="Belum ada tematik" description="Kajian tematik akan muncul di sini." />
+    );
   }
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {tematik.series.map((series) => (
-        <SeriesCard key={series.id} series={series} />
+        <SeriesCardCompact key={series.id} series={series} />
       ))}
     </div>
   );
@@ -221,8 +224,8 @@ function DiscoverSection() {
           </span>
           <h2 className="text-2xl font-bold tracking-tight md:text-3xl">Temukan Kajian</h2>
           <p className="max-w-md text-sm text-muted md:text-base">
-            Cari berdasarkan judul, kitab, pemateri, atau tema. Semua kajian tersusun
-            rapi untuk memudahkan belajarmu.
+            Cari berdasarkan judul, kitab, pemateri, atau tema. Semua kajian tersusun rapi untuk
+            memudahkan belajarmu.
           </p>
           <form
             action="/search"
