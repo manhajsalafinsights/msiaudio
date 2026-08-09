@@ -300,7 +300,11 @@ export function AudioForm({ defaultValues, audioId, seriesOptions }: AudioFormPr
         <div className="flex flex-col gap-3">
           <Input
             value={youtubeUrl}
-            onChange={(e) => setYoutubeUrl(e.target.value)}
+            onChange={(e) => {
+              const next = e.target.value;
+              if (!next) metaFilledForRef.current = null;
+              setYoutubeUrl(next);
+            }}
             placeholder="https://youtube.com/watch?v=xxxx atau https://youtu.be/xxxx"
             invalid={youtubeUrl.length > 0 && !videoId}
           />

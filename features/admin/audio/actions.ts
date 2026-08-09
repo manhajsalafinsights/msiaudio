@@ -49,6 +49,10 @@ export interface YouTubeMetadata {
 const RETRY_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 500;
 
+// Innertube API key publik milik klien web YouTube (di-embed di halaman
+// watch). Bukan secret — hanya dipakai untuk memanggil endpoint player.
+const YOUTUBE_WEB_INNERTUBE_KEY = "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8";
+
 async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
   let lastError: unknown;
   for (let attempt = 0; attempt < RETRY_ATTEMPTS; attempt++) {
@@ -66,8 +70,10 @@ async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
 
 /**
  * Ambil metadata video YouTube (judul, durasi, thumbnail) tanpa API key.
- * - Judul: fallback oEmbed (andal) + parse ytInitialPlayerResponse.
- * - Durasi: parse "lengthSeconds" dari halaman watch.
+ * - Sumber utama: endpoint internal youtubei/v1/player (dipakai player web
+ *   YouTube) — mengembalikan videoDetails (title + lengthSeconds) secara JSON,
+ *   andal dari server/datacenter meski playability UNPLAYABLE.
+ * - Cadangan judul: oEmbed. Cadangan durasi: regex lengthSeconds di halaman watch.
  */
 export async function fetchYouTubeMetadata(url: string): Promise<ActionState<YouTubeMetadata>> {
   try {
@@ -81,36 +87,78 @@ export async function fetchYouTubeMetadata(url: string): Promise<ActionState<You
     let title: string | null = null;
     let durationSeconds: number | null = null;
 
-    try {
-      const oembed = await withRetry(() => getYouTubeOEmbed(url));
-      if (oembed?.title) title = oembed.title;
-    } catch {
-      // lanjut scrape
-    }
-
+    // 1) Endpoint internal YouTube (WEB client) — sumber metadata paling andal.
     try {
       const res = await withRetry(() =>
-        fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+        fetch(`https://www.youtube.com/youtubei/v1/player?key=${YOUTUBE_WEB_INNERTUBE_KEY}`, {
+          method: "POST",
           headers: {
-            "Accept-Language": "id",
+            "Content-Type": "application/json",
             "User-Agent":
               "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
           },
+          body: JSON.stringify({
+            context: {
+              client: {
+                clientName: "WEB",
+                clientVersion: "2.20240101.00.00",
+                hl: "id",
+                gl: "ID",
+              },
+            },
+            videoId,
+          }),
           signal: AbortSignal.timeout(10000),
         }),
       );
       if (res.ok) {
-        const html = await res.text();
-        // Ekstraksi langsung dari HTML — ytInitialPlayerResponse sulit diparse
-        // karena JSON-nya diikuti data lain sehingga JSON.parse selalu gagal.
-        const len = html.match(/"lengthSeconds":"?(\d+)"?/)?.[1];
+        const data = (await res.json()) as {
+          videoDetails?: { title?: string; lengthSeconds?: string };
+        };
+        const vd = data.videoDetails;
+        if (vd?.title) title = vd.title;
+        const len = vd?.lengthSeconds;
         if (len) {
           const n = Number(len);
           if (Number.isFinite(n) && n > 0) durationSeconds = n;
         }
       }
     } catch {
-      // durasi tidak didapat; tetap kembalikan judul/thumbnail bila ada
+      // lanjut ke cadangan
+    }
+
+    // 2) Cadangan judul — oEmbed.
+    try {
+      const oembed = await withRetry(() => getYouTubeOEmbed(url));
+      if (oembed?.title) title = title ?? oembed.title;
+    } catch {
+      // lanjut
+    }
+
+    // 3) Cadangan durasi — scrape halaman watch.
+    if (!durationSeconds) {
+      try {
+        const res = await withRetry(() =>
+          fetch(`https://www.youtube.com/watch?v=${videoId}&hl=en`, {
+            headers: {
+              "Accept-Language": "en",
+              "User-Agent":
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            },
+            signal: AbortSignal.timeout(10000),
+          }),
+        );
+        if (res.ok) {
+          const html = await res.text();
+          const len = html.match(/"lengthSeconds":"?(\d+)"?/)?.[1];
+          if (len) {
+            const n = Number(len);
+            if (Number.isFinite(n) && n > 0) durationSeconds = n;
+          }
+        }
+      } catch {
+        // durasi tidak didapat; tetap kembalikan judul/thumbnail bila ada
+      }
     }
 
     if (!title && !durationSeconds) {
