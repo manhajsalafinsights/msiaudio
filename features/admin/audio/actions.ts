@@ -88,12 +88,21 @@ async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
   throw lastError;
 }
 
+/** Ubah durasi ISO-8601 (mis. "PT1H2M3S") menjadi detik. */
+function parseISO8601Duration(input?: string): number | null {
+  if (!input) return null;
+  const m = input.match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/);
+  if (!m) return null;
+  const total = Number(m[1] ?? 0) * 3600 + Number(m[2] ?? 0) * 60 + Number(m[3] ?? 0);
+  return total > 0 ? total : null;
+}
+
 /**
- * Ambil metadata video YouTube (judul, durasi, thumbnail) tanpa API key.
- * - Sumber utama: endpoint internal youtubei/v1/player (dipakai player web
- *   YouTube) — mengembalikan videoDetails (title + lengthSeconds) secara JSON,
- *   andal dari server/datacenter meski playability UNPLAYABLE.
- * - Cadangan judul: oEmbed. Cadangan durasi: regex lengthSeconds di halaman watch.
+ * Ambil metadata video YouTube (judul, durasi, thumbnail).
+ * Prioritas sumber (untuk mengatasi pemblokiran IP datacenter Vercel):
+ *  1. YouTube Data API v3 — butuh YOUTUBE_API_KEY (paling andal, resmi).
+ *  2. youtubei/v1/player (klien WEB) — tanpa key, andal dari IP rumah.
+ *  3. oEmbed (judul) + regex lengthSeconds halaman watch (durasi).
  */
 export async function fetchYouTubeMetadata(url: string): Promise<ActionState<YouTubeMetadata>> {
   try {
@@ -107,55 +116,85 @@ export async function fetchYouTubeMetadata(url: string): Promise<ActionState<You
     let title: string | null = null;
     let durationSeconds: number | null = null;
 
-    // 1) Endpoint internal YouTube (WEB client) — sumber metadata paling andal.
-    try {
-      const res = await withRetry(() =>
-        fetch(`https://www.youtube.com/youtubei/v1/player?key=${YOUTUBE_WEB_INNERTUBE_KEY}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "User-Agent":
-              "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          },
-          body: JSON.stringify({
-            context: {
-              client: {
-                clientName: "WEB",
-                clientVersion: "2.20240101.00.00",
-                hl: "id",
-                gl: "ID",
-              },
-            },
-            videoId,
-          }),
-          signal: AbortSignal.timeout(10000),
-        }),
-      );
-      if (res.ok) {
-        const data = (await res.json()) as {
-          videoDetails?: { title?: string; lengthSeconds?: string };
-        };
-        const vd = data.videoDetails;
-        if (vd?.title) title = vd.title;
-        const len = vd?.lengthSeconds;
-        if (len) {
-          const n = Number(len);
-          if (Number.isFinite(n) && n > 0) durationSeconds = n;
+    // 1) YouTube Data API v3 (bila key tersedia).
+    const apiKey = process.env.YOUTUBE_API_KEY;
+    if (apiKey) {
+      try {
+        const res = await withRetry(() =>
+          fetch(
+            `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoId}&key=${apiKey}`,
+            { signal: AbortSignal.timeout(10000) },
+          ),
+        );
+        if (res.ok) {
+          const data = (await res.json()) as {
+            items?: { snippet?: { title?: string }; contentDetails?: { duration?: string } }[];
+          };
+          const item = data.items?.[0];
+          if (item) {
+            if (item.snippet?.title) title = item.snippet.title;
+            const len = parseISO8601Duration(item.contentDetails?.duration);
+            if (len) durationSeconds = len;
+          }
         }
+      } catch {
+        // lanjut ke sumber cadangan
       }
-    } catch {
-      // lanjut ke cadangan
     }
 
-    // 2) Cadangan judul — oEmbed.
-    try {
-      const oembed = await withRetry(() => getYouTubeOEmbed(url));
-      if (oembed?.title) title = title ?? oembed.title;
-    } catch {
-      // lanjut
+    // 2) Endpoint internal YouTube (WEB client) — tanpa key.
+    if (!title || !durationSeconds) {
+      try {
+        const res = await withRetry(() =>
+          fetch(`https://www.youtube.com/youtubei/v1/player?key=${YOUTUBE_WEB_INNERTUBE_KEY}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "User-Agent":
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            },
+            body: JSON.stringify({
+              context: {
+                client: {
+                  clientName: "WEB",
+                  clientVersion: "2.20240101.00.00",
+                  hl: "id",
+                  gl: "ID",
+                },
+              },
+              videoId,
+            }),
+            signal: AbortSignal.timeout(10000),
+          }),
+        );
+        if (res.ok) {
+          const data = (await res.json()) as {
+            videoDetails?: { title?: string; lengthSeconds?: string };
+          };
+          const vd = data.videoDetails;
+          if (vd?.title) title = title ?? vd.title;
+          const len = vd?.lengthSeconds;
+          if (len) {
+            const n = Number(len);
+            if (Number.isFinite(n) && n > 0) durationSeconds = n;
+          }
+        }
+      } catch {
+        // lanjut ke cadangan
+      }
     }
 
-    // 3) Cadangan durasi — scrape halaman watch.
+    // 3) Cadangan judul — oEmbed.
+    if (!title) {
+      try {
+        const oembed = await withRetry(() => getYouTubeOEmbed(url));
+        if (oembed?.title) title = oembed.title;
+      } catch {
+        // lanjut
+      }
+    }
+
+    // 4) Cadangan durasi — scrape halaman watch.
     if (!durationSeconds) {
       try {
         const res = await withRetry(() =>
