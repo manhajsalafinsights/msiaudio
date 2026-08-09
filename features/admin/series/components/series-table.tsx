@@ -58,12 +58,17 @@ export function SeriesTable({ rows, total, totalPages, page, statusFilter }: Ser
         <div className="flex flex-wrap items-center gap-3 border-b border-border p-3">
           <DataTableToolbar
             placeholder="Cari series..."
-            filterOptions={[
-              { label: "Published", value: "PUBLISHED" },
-              { label: "Draft", value: "DRAFT" },
+            filters={[
+              {
+                paramKey: "status",
+                label: "Semua status",
+                value: statusFilter,
+                options: [
+                  { label: "Published", value: "PUBLISHED" },
+                  { label: "Draft", value: "DRAFT" },
+                ],
+              },
             ]}
-            filterLabel="Semua status"
-            filterValue={statusFilter}
           />
 
           {selected.length > 0 && (

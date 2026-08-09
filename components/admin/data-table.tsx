@@ -6,21 +6,20 @@ import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 
+export interface ToolbarFilter {
+  paramKey: string;
+  label: string;
+  value: string;
+  options: { label: string; value: string }[];
+}
+
 interface DataTableToolbarProps {
   placeholder?: string;
-  filterOptions?: { label: string; value: string }[];
-  filterLabel?: string;
-  filterValue?: string;
+  filters?: ToolbarFilter[];
   children?: React.ReactNode;
 }
 
-export function DataTableToolbar({
-  placeholder = "Cari...",
-  filterOptions,
-  filterLabel,
-  filterValue,
-  children,
-}: DataTableToolbarProps) {
+export function DataTableToolbar({ placeholder = "Cari...", filters, children }: DataTableToolbarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -72,21 +71,22 @@ export function DataTableToolbar({
         )}
       </form>
 
-      {filterOptions && (
+      {filters?.map((filter) => (
         <Select
-          aria-label={filterLabel ?? "Filter"}
-          value={filterValue ?? ""}
-          onChange={(e) => applyParams({ status: e.target.value })}
+          key={filter.paramKey}
+          aria-label={filter.label}
+          value={filter.value}
+          onChange={(e) => applyParams({ [filter.paramKey]: e.target.value })}
           className="w-44"
         >
-          <option value="">{filterLabel ?? "Semua"}</option>
-          {filterOptions.map((opt) => (
+          <option value="">{filter.label}</option>
+          {filter.options.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>
           ))}
         </Select>
-      )}
+      ))}
 
       {children}
     </div>

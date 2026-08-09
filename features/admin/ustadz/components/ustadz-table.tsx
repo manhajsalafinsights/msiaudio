@@ -57,12 +57,17 @@ export function UstadzTable({ rows, total, totalPages, page, statusFilter }: Ust
         <div className="flex flex-wrap items-center gap-3 border-b border-border p-3">
           <DataTableToolbar
             placeholder="Cari ustadz..."
-            filterOptions={[
-              { label: "Published", value: "ACTIVE" },
-              { label: "Draft", value: "INACTIVE" },
+            filters={[
+              {
+                paramKey: "status",
+                label: "Semua status",
+                value: statusFilter,
+                options: [
+                  { label: "Published", value: "ACTIVE" },
+                  { label: "Draft", value: "INACTIVE" },
+                ],
+              },
             ]}
-            filterLabel="Semua status"
-            filterValue={statusFilter}
           />
 
           {selected.length > 0 && (

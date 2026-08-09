@@ -287,8 +287,9 @@ export async function listAudioAdmin(opts: {
   page?: number;
   perPage?: number;
   status?: "PUBLISHED" | "DRAFT" | "ALL";
+  seriesId?: string;
 }) {
-  const { q, page = 1, perPage = 10, status } = opts;
+  const { q, page = 1, perPage = 10, status, seriesId } = opts;
   const where: Prisma.AudioWhereInput = {
     ...(q
       ? {
@@ -298,6 +299,7 @@ export async function listAudioAdmin(opts: {
           ],
         }
       : {}),
+    ...(seriesId ? { seriesId } : {}),
     ...(status === "PUBLISHED" ? { published: true } : {}),
     ...(status === "DRAFT" ? { published: false } : {}),
   };

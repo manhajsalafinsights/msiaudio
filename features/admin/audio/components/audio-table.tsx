@@ -39,9 +39,21 @@ interface AudioTableProps {
   totalPages: number;
   page: number;
   statusFilter: string;
+  seriesFilter: string;
+  seriesOptions: { id: string; judul: string }[];
+  perPage: number;
 }
 
-export function AudioTable({ rows, total, totalPages, page, statusFilter }: AudioTableProps) {
+export function AudioTable({
+  rows,
+  total,
+  totalPages,
+  page,
+  statusFilter,
+  seriesFilter,
+  seriesOptions,
+  perPage,
+}: AudioTableProps) {
   const router = useRouter();
   const { pending, error, run } = useAdminAction(() => router.refresh());
   const [deleteTarget, setDeleteTarget] = useState<AudioRow | null>(null);
@@ -59,12 +71,23 @@ export function AudioTable({ rows, total, totalPages, page, statusFilter }: Audi
         <div className="flex flex-wrap items-center gap-3 border-b border-border p-3">
           <DataTableToolbar
             placeholder="Cari audio..."
-            filterOptions={[
-              { label: "Published", value: "PUBLISHED" },
-              { label: "Draft", value: "DRAFT" },
+            filters={[
+              {
+                paramKey: "status",
+                label: "Semua status",
+                value: statusFilter,
+                options: [
+                  { label: "Published", value: "PUBLISHED" },
+                  { label: "Draft", value: "DRAFT" },
+                ],
+              },
+              {
+                paramKey: "seriesId",
+                label: "Semua series",
+                value: seriesFilter,
+                options: seriesOptions.map((s) => ({ label: s.judul, value: s.id })),
+              },
             ]}
-            filterLabel="Semua status"
-            filterValue={statusFilter}
           />
 
           {selected.length > 0 && (
@@ -181,7 +204,7 @@ export function AudioTable({ rows, total, totalPages, page, statusFilter }: Audi
           </TableBody>
         </Table>
 
-        <Pagination page={page} totalPages={totalPages} total={total} />
+        <Pagination page={page} totalPages={totalPages} total={total} perPage={perPage} />
       </div>
 
       <ConfirmDialog
