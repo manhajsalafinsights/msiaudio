@@ -44,6 +44,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# dokumentasi lokal (tidak di-push ke GitHub)
+/*.md
+/features/server-actions/README.md
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
