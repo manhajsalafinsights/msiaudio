@@ -128,18 +128,19 @@ export default async function SeriesDetailPage({ params }: { params: Promise<{ s
     throw error;
   }
 
-  const audioList = await getSeriesAudioList(series.id);
-  const relatedSeries = await getRelatedSeries(
-    {
-      id: series.id,
-      speakers: series.speakers,
-      categories: series.categories,
-    },
-    6,
-  );
+  const [audioList, relatedSeries, user] = await Promise.all([
+    getSeriesAudioList(series.id),
+    getRelatedSeries(
+      {
+        id: series.id,
+        speakers: series.speakers,
+        categories: series.categories,
+      },
+      6,
+    ),
+    getCurrentUser(),
+  ]);
 
-  // Progress user (hanya jika login) — progress series + status tiap sesi.
-  const user = await getCurrentUser();
   const seriesProgress = user ? await getProgress(user.id, series.id) : null;
   const listeningMap = new Map<string, { completed: boolean; progressPercent: number }>();
   if (user && audioList.length > 0) {

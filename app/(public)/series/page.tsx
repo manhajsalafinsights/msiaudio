@@ -132,14 +132,17 @@ async function SeriesGrid({
   tagId?: string;
   sort: string;
 }) {
-  const result = await getSeriesList(page, PER_PAGE, {
-    q,
-    categoryId,
-    speakerId,
-    seriesTypeId,
-    tagId,
-    sort: sort as (typeof SERIES_SORTS)[number],
-  });
+  const [result, user] = await Promise.all([
+    getSeriesList(page, PER_PAGE, {
+      q,
+      categoryId,
+      speakerId,
+      seriesTypeId,
+      tagId,
+      sort: sort as (typeof SERIES_SORTS)[number],
+    }),
+    getCurrentUser(),
+  ]);
 
   if (result.items.length === 0) {
     return (
@@ -159,7 +162,6 @@ async function SeriesGrid({
   }
 
   // Progress user (hanya jika login) — batch, tanpa N+1.
-  const user = await getCurrentUser();
   const progressMap = new Map<string, { completedCount: number; progressPercent: number; lastAudioId: string | null }>();
   if (user) {
     const rows = await getProgressBySeriesIds(

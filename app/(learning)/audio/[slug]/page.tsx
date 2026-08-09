@@ -7,8 +7,6 @@ import { absoluteUrl, buildOpenGraph, buildTwitter, canonicalUrl, OG_IMAGE_WIDTH
 import { NotFoundError } from "@/lib/errors/app-error";
 import { getPlayerContext } from "@/features/player/services/player-service";
 import { listPublishedAudioSlugs, listRelatedAudio, listAudioBySameSpeaker } from "@/repositories/audio-repository";
-import { getCurrentUser } from "@/lib/auth/session";
-import { getListeningByAudioIds } from "@/repositories/progress-repository";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/typography";
@@ -192,9 +190,9 @@ export default async function AudioDetailPage({ params }: { params: Promise<{ sl
 
   const { audio, resolvedSource, queue } = playerContext;
 
-  // Daftar sesi series dengan status listening nyata (hanya jika login).
-  const user = await getCurrentUser();
-  const sessionRows = queue
+  // Daftar sesi series; status listening (centang) diisi client-side via /api/listening
+  // agar halaman bebas runtime API (headers) sehingga bisa di-cache via ISR.
+  const sessions = queue
     .map(({ audio: item }) => ({
       id: item.id,
       slug: item.slug,
@@ -202,23 +200,9 @@ export default async function AudioDetailPage({ params }: { params: Promise<{ sl
       title: item.judul,
       duration: item.durasi,
       isCurrent: item.id === audio.id,
+      isCompleted: false,
     }))
     .sort((a, b) => a.number - b.number);
-
-  const listeningMap = new Map<string, { completed: boolean }>();
-  if (user && sessionRows.length > 0) {
-    const rows = await getListeningByAudioIds(
-      user.id,
-      sessionRows.map((s) => s.id),
-    );
-    for (const row of rows) listeningMap.set(row.audioId, row);
-  }
-
-  const sessions = sessionRows.map((s) => ({
-    ...s,
-    isCompleted: listeningMap.get(s.id)?.completed ?? false,
-  }));
-  const completedSessions = sessions.filter((s) => s.isCompleted).length;
 
   const speakerIds = audio.series.speakers.map((s) => s.speaker.id);
   const [seriesRelated, speakerRelated] = await Promise.all([
@@ -262,7 +246,7 @@ export default async function AudioDetailPage({ params }: { params: Promise<{ sl
         <PlayerErrorBoundary>
           <PlayerProvider autoInitialize elementId="yt-player-full" source={resolvedSource ?? undefined}>
             <OfflineBanner />
-            <PlayerFull audio={audio} sessions={sessions} completedSessions={completedSessions} />
+            <PlayerFull audio={audio} sessions={sessions} />
           </PlayerProvider>
         </PlayerErrorBoundary>
 

@@ -61,6 +61,7 @@ export function PlayerFull({ audio, sessions, completedSessions }: PlayerFullPro
 
   const [activeTab, setActiveTab] = useState("info");
   const [isNoteEditorOpen, setIsNoteEditorOpen] = useState(false);
+  const [listeningStatus, setListeningStatus] = useState<Record<string, boolean>>({});
 
   // Only log once on mount
   const hasLoggedMount = useRef(false);
@@ -70,6 +71,21 @@ export function PlayerFull({ audio, sessions, completedSessions }: PlayerFullPro
       console.log("[Player] mounted, videoId:", videoId);
     }
   }, [videoId]);
+
+  useEffect(() => {
+    if (!sessions?.length) return;
+    let cancelled = false;
+    const ids = sessions.map((s) => s.id).join(",");
+    fetch(`/api/listening?audioIds=${ids}`)
+      .then((res) => (res.ok ? res.json() : { completed: {} }))
+      .then((data: { completed?: Record<string, boolean> }) => {
+        if (!cancelled) setListeningStatus(data.completed ?? {});
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [sessions]);
 
   useEffect(() => {
     if (!isCurrent && resolvedSource) {
@@ -116,8 +132,8 @@ export function PlayerFull({ audio, sessions, completedSessions }: PlayerFullPro
 
   const speakerNames = audio.series.speakers.map((s) => s.speaker.nama).join(", ");
 
-  // Session list dari server (slug nyata, status listening nyata). Fallback minimal.
-  const sessionItems = sessions?.length
+  // Session list (slug nyata dari server; status listening di-merge client-side).
+  const baseSessionItems = sessions?.length
     ? sessions
     : audio.series.seriesType
       ? Array.from({ length: audio.series.totalSesi }, (_, i) => ({
@@ -130,6 +146,11 @@ export function PlayerFull({ audio, sessions, completedSessions }: PlayerFullPro
           isCurrent: i + 1 === audio.nomorSesi,
         }))
       : [];
+
+  const sessionItems = baseSessionItems.map((s) => ({
+    ...s,
+    isCompleted: listeningStatus[s.id] ?? s.isCompleted,
+  }));
 
   const completedCount =
     completedSessions ?? sessionItems.filter((s) => s.isCompleted).length;
