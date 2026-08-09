@@ -23,7 +23,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FavoriteButton } from "@/features/favorite/favorite-button";
 
 export const revalidate = 60;
-export const dynamicParams = false;
+export const dynamicParams = true;
 
 export async function generateStaticParams() {
   const slugs = await listPublishedSeriesSlugs();
