@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma/client";
 import { requireAdmin } from "@/lib/auth/session";
 import type { ActionState } from "@/types/action";
@@ -18,6 +19,25 @@ import { cleanupCover } from "@/lib/supabase/storage";
 
 function revalidatePublic() {
   revalidatePath("/", "layout");
+}
+
+/** Cek apakah video YouTube sudah dipakai audio lain. */
+async function findMediaConflict(provider: "YOUTUBE", providerId: string, excludeAudioId?: string) {
+  return prisma.mediaSource.findFirst({
+    where: {
+      provider,
+      providerId,
+      ...(excludeAudioId ? { audioId: { not: excludeAudioId } } : {}),
+    },
+    select: { audio: { select: { judul: true } } },
+  });
+}
+
+function friendlyPrismaMessage(error: unknown): string | null {
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+    return "Data sudah ada (ada yang sama sudah tersimpan).";
+  }
+  return null;
 }
 
 function buildMediaSourceData(youtubeUrl: string) {
@@ -218,6 +238,19 @@ export async function createAudio(input: AudioFormInput): Promise<ActionState<st
     const slug = await resolveSlug(data);
     const media = data.youtubeUrl ? buildMediaSourceData(data.youtubeUrl) : null;
 
+    if (media) {
+      const conflict = await findMediaConflict(media.provider, media.providerId);
+      if (conflict) {
+        return {
+          ok: false,
+          error: {
+            code: "CONFLICT",
+            message: `Video YouTube ini sudah dipakai oleh audio "${conflict.audio.judul}". Ganti URL atau edit audio tersebut.`,
+          },
+        };
+      }
+    }
+
     const audio = await prisma.audio.create({
       data: {
         judul: data.judul,
@@ -240,7 +273,7 @@ export async function createAudio(input: AudioFormInput): Promise<ActionState<st
       ok: false,
       error: {
         code: "UNKNOWN_ERROR",
-        message: error instanceof Error ? error.message : "Gagal membuat audio",
+        message: friendlyPrismaMessage(error) ?? "Gagal membuat audio",
       },
     };
   }
@@ -290,6 +323,16 @@ export async function updateAudio(id: string, input: AudioFormInput): Promise<Ac
         select: { id: true, providerId: true },
       });
       if (!mediaRow || mediaRow.providerId !== media.providerId) {
+        const conflict = await findMediaConflict(media.provider, media.providerId, id);
+        if (conflict) {
+          return {
+            ok: false,
+            error: {
+              code: "CONFLICT",
+              message: `Video YouTube ini sudah dipakai oleh audio "${conflict.audio.judul}". Ganti URL atau edit audio tersebut.`,
+            },
+          };
+        }
         await prisma.mediaSource.deleteMany({ where: { audioId: id } });
         await prisma.mediaSource.create({ data: { audioId: id, ...media } });
       }
@@ -303,7 +346,7 @@ export async function updateAudio(id: string, input: AudioFormInput): Promise<Ac
       ok: false,
       error: {
         code: "UNKNOWN_ERROR",
-        message: error instanceof Error ? error.message : "Gagal memperbarui audio",
+        message: friendlyPrismaMessage(error) ?? "Gagal memperbarui audio",
       },
     };
   }
