@@ -1,17 +1,5 @@
 import { NextResponse } from "next/server";
 
-const UA =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-const KEY = "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8";
-
-const CLIENTS = [
-  { clientName: "WEB", clientVersion: "2.20240101.00.00" },
-  { clientName: "ANDROID", clientVersion: "19.09.37" },
-  { clientName: "TVHTML5_SIMPLY_EMBEDDED_PLAYER", clientVersion: "2.0" },
-  { clientName: "WEB_EMBEDDED_PLAYER", clientVersion: "1.20240101.00.00" },
-  { clientName: "IOS", clientVersion: "19.09.3" },
-];
-
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const url = searchParams.get("url") ?? "";
@@ -20,33 +8,54 @@ export async function GET(req: Request) {
   const videoId = m[1];
 
   const results: Record<string, unknown>[] = [];
-  for (const client of CLIENTS) {
+
+  const pipedInstances = ["https://pipedapi.kavin.rocks", "https://pipedapi.adminforge.de"];
+  for (const base of pipedInstances) {
     try {
-      const res = await fetch(`https://www.youtube.com/youtubei/v1/player?key=${KEY}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "User-Agent": UA },
-        body: JSON.stringify({
-          context: { client: { ...client, hl: "id", gl: "ID" } },
-          videoId,
-        }),
+      const res = await fetch(`${base}/streams/${videoId}`, {
+        headers: { "User-Agent": "Mozilla/5.0" },
         signal: AbortSignal.timeout(8000),
       });
       const data = (await res.json()) as {
-        playabilityStatus?: { status?: string; reason?: string };
-        videoDetails?: { title?: string; lengthSeconds?: string };
-        error?: { message?: string };
+        title?: string;
+        duration?: number;
+        error?: string;
+        message?: string;
       };
       results.push({
-        client: client.clientName,
+        source: `piped:${base}`,
         status: res.status,
-        playability: data.playabilityStatus?.status ?? null,
-        reason: data.playabilityStatus?.reason ?? data.error?.message ?? null,
-        title: data.videoDetails?.title ?? null,
-        lengthSeconds: data.videoDetails?.lengthSeconds ?? null,
+        title: data.title ?? null,
+        duration: data.duration ?? null,
+        error: data.error ?? data.message ?? null,
+      });
+    } catch (e) {
+      results.push({ source: `piped:${base}`, error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
+  const invidiousInstances = ["https://inv.nadeko.net", "https://invidious.jing.rocks"];
+  for (const base of invidiousInstances) {
+    try {
+      const res = await fetch(`${base}/api/v1/videos/${videoId}`, {
+        headers: { "User-Agent": "Mozilla/5.0" },
+        signal: AbortSignal.timeout(8000),
+      });
+      const data = (await res.json()) as {
+        title?: string;
+        lengthSeconds?: number;
+        error?: string;
+      };
+      results.push({
+        source: `invidious:${base}`,
+        status: res.status,
+        title: data.title ?? null,
+        lengthSeconds: data.lengthSeconds ?? null,
+        error: data.error ?? null,
       });
     } catch (e) {
       results.push({
-        client: client.clientName,
+        source: `invidious:${base}`,
         error: e instanceof Error ? e.message : String(e),
       });
     }
