@@ -11,6 +11,7 @@ import { recalcSeriesTotals } from "@/repositories/series-repository";
 import {
   audioSlugExists,
   audioNomorSesiExists,
+  getNextNomorSesi as getNextNomorSesiRepo,
 } from "@/repositories/audio-repository";
 import { audioFormSchema, type AudioFormInput } from "@/features/admin/audio/validation";
 import { cleanupCover } from "@/lib/supabase/storage";
@@ -113,12 +114,37 @@ export async function fetchYouTubeMetadata(url: string): Promise<ActionState<You
     }
 
     if (!title && !durationSeconds) {
-      return { ok: false, error: { code: "NOT_FOUND", message: "Tidak dapat mengambil metadata video" } };
+      return {
+        ok: false,
+        error: { code: "NOT_FOUND", message: "Tidak dapat mengambil metadata video" },
+      };
     }
 
     return { ok: true, data: { title, durationSeconds, thumbnail } };
   } catch (error) {
-    return { ok: false, error: { code: "UNKNOWN_ERROR", message: error instanceof Error ? error.message : "Gagal mengambil metadata video" } };
+    return {
+      ok: false,
+      error: {
+        code: "UNKNOWN_ERROR",
+        message: error instanceof Error ? error.message : "Gagal mengambil metadata video",
+      },
+    };
+  }
+}
+
+/** Nomor sesi otomatis berikutnya untuk sebuah series (form tambah). */
+export async function getNextNomorSesi(seriesId: string): Promise<ActionState<number>> {
+  try {
+    await requireAdmin();
+    return { ok: true, data: await getNextNomorSesiRepo(seriesId) };
+  } catch (error) {
+    return {
+      ok: false,
+      error: {
+        code: "UNKNOWN_ERROR",
+        message: error instanceof Error ? error.message : "Gagal menentukan nomor sesi",
+      },
+    };
   }
 }
 
@@ -132,7 +158,13 @@ export async function createAudio(input: AudioFormInput): Promise<ActionState<st
     const data = parsed.data;
 
     if (await audioNomorSesiExists(data.seriesId, data.nomorSesi)) {
-      return { ok: false, error: { code: "CONFLICT", message: `Nomor sesi ${data.nomorSesi} sudah dipakai di series ini` } };
+      return {
+        ok: false,
+        error: {
+          code: "CONFLICT",
+          message: `Nomor sesi ${data.nomorSesi} sudah dipakai di series ini`,
+        },
+      };
     }
 
     const slug = await resolveSlug(data);
@@ -156,7 +188,13 @@ export async function createAudio(input: AudioFormInput): Promise<ActionState<st
     revalidatePublic();
     return { ok: true, data: audio.id };
   } catch (error) {
-    return { ok: false, error: { code: "UNKNOWN_ERROR", message: error instanceof Error ? error.message : "Gagal membuat audio" } };
+    return {
+      ok: false,
+      error: {
+        code: "UNKNOWN_ERROR",
+        message: error instanceof Error ? error.message : "Gagal membuat audio",
+      },
+    };
   }
 }
 
@@ -170,7 +208,13 @@ export async function updateAudio(id: string, input: AudioFormInput): Promise<Ac
     const data = parsed.data;
 
     if (await audioNomorSesiExists(data.seriesId, data.nomorSesi, id)) {
-      return { ok: false, error: { code: "CONFLICT", message: `Nomor sesi ${data.nomorSesi} sudah dipakai di series ini` } };
+      return {
+        ok: false,
+        error: {
+          code: "CONFLICT",
+          message: `Nomor sesi ${data.nomorSesi} sudah dipakai di series ini`,
+        },
+      };
     }
 
     const slug = await resolveSlug(data, id);
@@ -207,22 +251,38 @@ export async function updateAudio(id: string, input: AudioFormInput): Promise<Ac
     revalidatePublic();
     return { ok: true, data: undefined };
   } catch (error) {
-    return { ok: false, error: { code: "UNKNOWN_ERROR", message: error instanceof Error ? error.message : "Gagal memperbarui audio" } };
+    return {
+      ok: false,
+      error: {
+        code: "UNKNOWN_ERROR",
+        message: error instanceof Error ? error.message : "Gagal memperbarui audio",
+      },
+    };
   }
 }
 
 export async function deleteAudio(id: string): Promise<ActionState> {
   try {
     await requireAdmin();
-    const audio = await prisma.audio.findUnique({ where: { id }, select: { seriesId: true, cover: true } });
-    if (!audio) return { ok: false, error: { code: "NOT_FOUND", message: "Audio tidak ditemukan" } };
+    const audio = await prisma.audio.findUnique({
+      where: { id },
+      select: { seriesId: true, cover: true },
+    });
+    if (!audio)
+      return { ok: false, error: { code: "NOT_FOUND", message: "Audio tidak ditemukan" } };
     await prisma.audio.delete({ where: { id } });
     await cleanupCover(audio.cover, null);
     await recalcSeriesTotals(audio.seriesId);
     revalidatePublic();
     return { ok: true, data: undefined };
   } catch (error) {
-    return { ok: false, error: { code: "UNKNOWN_ERROR", message: error instanceof Error ? error.message : "Gagal menghapus audio" } };
+    return {
+      ok: false,
+      error: {
+        code: "UNKNOWN_ERROR",
+        message: error instanceof Error ? error.message : "Gagal menghapus audio",
+      },
+    };
   }
 }
 
@@ -240,7 +300,8 @@ export async function setAudioStatus(id: string, published: boolean): Promise<Ac
 export async function bulkAudioStatus(ids: string[], published: boolean): Promise<ActionState> {
   try {
     await requireAdmin();
-    if (ids.length === 0) return { ok: false, error: { code: "VALIDATION_ERROR", message: "Tidak ada data dipilih" } };
+    if (ids.length === 0)
+      return { ok: false, error: { code: "VALIDATION_ERROR", message: "Tidak ada data dipilih" } };
     await prisma.audio.updateMany({ where: { id: { in: ids } }, data: { published } });
     revalidatePublic();
     return { ok: true, data: undefined };
@@ -252,7 +313,8 @@ export async function bulkAudioStatus(ids: string[], published: boolean): Promis
 export async function bulkDeleteAudio(ids: string[]): Promise<ActionState> {
   try {
     await requireAdmin();
-    if (ids.length === 0) return { ok: false, error: { code: "VALIDATION_ERROR", message: "Tidak ada data dipilih" } };
+    if (ids.length === 0)
+      return { ok: false, error: { code: "VALIDATION_ERROR", message: "Tidak ada data dipilih" } };
 
     const audios = await prisma.audio.findMany({
       where: { id: { in: ids } },
@@ -260,9 +322,7 @@ export async function bulkDeleteAudio(ids: string[]): Promise<ActionState> {
     });
     await prisma.audio.deleteMany({ where: { id: { in: ids } } });
 
-    await Promise.all(
-      audios.filter((a) => a.cover).map((a) => cleanupCover(a.cover, null)),
-    );
+    await Promise.all(audios.filter((a) => a.cover).map((a) => cleanupCover(a.cover, null)));
 
     const seriesIds = [...new Set(audios.map((a) => a.seriesId))];
     await Promise.all(seriesIds.map((seriesId) => recalcSeriesTotals(seriesId)));
@@ -270,6 +330,12 @@ export async function bulkDeleteAudio(ids: string[]): Promise<ActionState> {
 
     return { ok: true, data: undefined };
   } catch (error) {
-    return { ok: false, error: { code: "UNKNOWN_ERROR", message: error instanceof Error ? error.message : "Gagal menghapus" } };
+    return {
+      ok: false,
+      error: {
+        code: "UNKNOWN_ERROR",
+        message: error instanceof Error ? error.message : "Gagal menghapus",
+      },
+    };
   }
 }

@@ -174,7 +174,10 @@ export async function listAudioBySameSpeaker(
 /** Rentang durasi filter (menit). Semua batas dihitung dari kolom durasi (detik). */
 export type DurationBucket = "<15" | "15-30" | "30-60" | "60-120" | ">120";
 
-export const DURATION_BUCKETS: Record<DurationBucket, { label: string; range: { gte?: number; lte?: number } }> = {
+export const DURATION_BUCKETS: Record<
+  DurationBucket,
+  { label: string; range: { gte?: number; lte?: number } }
+> = {
   "<15": { label: "< 15 menit", range: { lte: 15 * 60 } },
   "15-30": { label: "15–30 menit", range: { gte: 15 * 60, lte: 30 * 60 } },
   "30-60": { label: "30–60 menit", range: { gte: 30 * 60, lte: 60 * 60 } },
@@ -207,7 +210,9 @@ export function buildAudioSearchWhere(q: string): Prisma.AudioWhereInput {
       { deskripsi: { contains: q, mode: "insensitive" } },
       { series: { judul: { contains: q, mode: "insensitive" } } },
       { series: { seriesType: { nama: { contains: q, mode: "insensitive" } } } },
-      { series: { speakers: { some: { speaker: { nama: { contains: q, mode: "insensitive" } } } } } },
+      {
+        series: { speakers: { some: { speaker: { nama: { contains: q, mode: "insensitive" } } } } },
+      },
       { series: { tags: { some: { tag: { nama: { contains: q, mode: "insensitive" } } } } } },
     ],
   };
@@ -288,8 +293,9 @@ export async function listAudioAdmin(opts: {
   perPage?: number;
   status?: "PUBLISHED" | "DRAFT" | "ALL";
   seriesId?: string;
+  sort?: "sesi-asc" | "sesi-desc" | "terbaru";
 }) {
-  const { q, page = 1, perPage = 10, status, seriesId } = opts;
+  const { q, page = 1, perPage = 10, status, seriesId, sort } = opts;
   const where: Prisma.AudioWhereInput = {
     ...(q
       ? {
@@ -304,15 +310,25 @@ export async function listAudioAdmin(opts: {
     ...(status === "DRAFT" ? { published: false } : {}),
   };
 
+  const orderBy: Prisma.AudioOrderByWithRelationInput[] =
+    sort === "sesi-desc"
+      ? [{ nomorSesi: "desc" }, { updatedAt: "desc" }]
+      : sort === "terbaru"
+        ? [{ updatedAt: "desc" }]
+        : [{ nomorSesi: "asc" }, { updatedAt: "desc" }];
+
   const [items, total] = await Promise.all([
     prisma.audio.findMany({
       where,
-      orderBy: [{ nomorSesi: "asc" }, { updatedAt: "desc" }],
+      orderBy,
       skip: (page - 1) * perPage,
       take: perPage,
       include: {
         series: { select: { id: true, judul: true, slug: true } },
-        mediaSources: { take: 1, select: { id: true, provider: true, url: true, providerId: true } },
+        mediaSources: {
+          take: 1,
+          select: { id: true, provider: true, url: true, providerId: true },
+        },
       },
     }),
     prisma.audio.count({ where }),
@@ -326,7 +342,10 @@ export async function getAudioAdmin(id: string) {
     where: { id },
     include: {
       series: { select: { id: true, judul: true } },
-      mediaSources: { take: 1, select: { id: true, provider: true, url: true, providerId: true, metadata: true } },
+      mediaSources: {
+        take: 1,
+        select: { id: true, provider: true, url: true, providerId: true, metadata: true },
+      },
     },
   });
 }
@@ -336,10 +355,27 @@ export async function audioSlugExists(slug: string, excludeId?: string) {
   return Boolean(item && item.id !== excludeId);
 }
 
-export async function audioNomorSesiExists(seriesId: string, nomorSesi: number, excludeId?: string) {
+export async function audioNomorSesiExists(
+  seriesId: string,
+  nomorSesi: number,
+  excludeId?: string,
+) {
   const item = await prisma.audio.findFirst({
     where: { seriesId, nomorSesi },
     select: { id: true },
   });
   return Boolean(item && item.id !== excludeId);
+}
+
+/** Nomor sesi kosong terkecil (gap) atau max+1 bila tidak ada gap. */
+export async function getNextNomorSesi(seriesId: string): Promise<number> {
+  const used = await prisma.audio.findMany({
+    where: { seriesId },
+    select: { nomorSesi: true },
+    orderBy: { nomorSesi: "asc" },
+  });
+  const set = new Set(used.map((a) => a.nomorSesi));
+  let n = 1;
+  while (set.has(n)) n++;
+  return n;
 }

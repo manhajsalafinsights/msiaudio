@@ -10,22 +10,32 @@ export const metadata = { title: "Audio (Admin)" };
 export const revalidate = 0;
 
 const PER_PAGE_OPTIONS = [10, 25, 50, 100];
+const SORT_OPTIONS = ["sesi-asc", "sesi-desc", "terbaru"];
 
 export default async function AdminAudioPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string; status?: string; seriesId?: string; perPage?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    page?: string;
+    status?: string;
+    seriesId?: string;
+    perPage?: string;
+    sort?: string;
+  }>;
 }) {
   const params = await searchParams;
   const page = Math.max(1, Number(params.page) || 1);
   const perPage = PER_PAGE_OPTIONS.includes(Number(params.perPage)) ? Number(params.perPage) : 10;
-  const status =
-    params.status === "PUBLISHED" || params.status === "DRAFT" ? params.status : "ALL";
+  const status = params.status === "PUBLISHED" || params.status === "DRAFT" ? params.status : "ALL";
   const seriesId = params.seriesId ?? "";
+  const sort = SORT_OPTIONS.includes(params.sort ?? "")
+    ? (params.sort as "sesi-asc" | "sesi-desc" | "terbaru")
+    : "sesi-asc";
 
   const [seriesOptions, { items, total, totalPages }] = await Promise.all([
     listAllSeries(),
-    listAudioAdmin({ q: params.q, page, perPage, status, seriesId }),
+    listAudioAdmin({ q: params.q, page, perPage, status, seriesId, sort }),
   ]);
 
   const rows = items.map((a) => ({
@@ -64,6 +74,7 @@ export default async function AdminAudioPage({
         seriesFilter={seriesId}
         seriesOptions={seriesOptions}
         perPage={perPage}
+        sortFilter={sort}
       />
     </div>
   );

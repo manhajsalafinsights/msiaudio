@@ -5,7 +5,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2, Eye, EyeOff, Video } from "lucide-react";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTableToolbar } from "@/components/admin/data-table";
@@ -42,6 +49,7 @@ interface AudioTableProps {
   seriesFilter: string;
   seriesOptions: { id: string; judul: string }[];
   perPage: number;
+  sortFilter: string;
 }
 
 export function AudioTable({
@@ -53,6 +61,7 @@ export function AudioTable({
   seriesFilter,
   seriesOptions,
   perPage,
+  sortFilter,
 }: AudioTableProps) {
   const router = useRouter();
   const { pending, error, run } = useAdminAction(() => router.refresh());
@@ -64,7 +73,10 @@ export function AudioTable({
     <div className="flex flex-col gap-4">
       <div className="rounded-xl border border-border bg-surface">
         {error && (
-          <div role="alert" className="border-b border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
+          <div
+            role="alert"
+            className="border-b border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger"
+          >
             {error}
           </div>
         )}
@@ -87,22 +99,44 @@ export function AudioTable({
                 value: seriesFilter,
                 options: seriesOptions.map((s) => ({ label: s.judul, value: s.id })),
               },
+              {
+                paramKey: "sort",
+                label: "Sesi ↑",
+                value: sortFilter,
+                options: [
+                  { label: "Sesi ↑", value: "sesi-asc" },
+                  { label: "Sesi ↓", value: "sesi-desc" },
+                  { label: "Terbaru", value: "terbaru" },
+                ],
+              },
             ]}
           />
 
           {selected.length > 0 && (
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted">{selected.length} dipilih</span>
-              <Button size="sm" variant="outline" disabled={pending}
-                onClick={() => run(() => bulkAudioStatus(selected, true), clear)}>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={pending}
+                onClick={() => run(() => bulkAudioStatus(selected, true), clear)}
+              >
                 Publish
               </Button>
-              <Button size="sm" variant="outline" disabled={pending}
-                onClick={() => run(() => bulkAudioStatus(selected, false), clear)}>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={pending}
+                onClick={() => run(() => bulkAudioStatus(selected, false), clear)}
+              >
                 Draft
               </Button>
-              <Button size="sm" variant="danger" disabled={pending}
-                onClick={() => setBulkDeleteOpen(true)}>
+              <Button
+                size="sm"
+                variant="danger"
+                disabled={pending}
+                onClick={() => setBulkDeleteOpen(true)}
+              >
                 Hapus
               </Button>
             </div>
@@ -152,7 +186,13 @@ export function AudioTable({
                   <TableCell>
                     <div className="flex items-center gap-3">
                       {row.cover ? (
-                        <Image src={row.cover} alt="" width={36} height={36} className="h-9 w-9 rounded-lg object-cover" />
+                        <Image
+                          src={row.cover}
+                          alt=""
+                          width={36}
+                          height={36}
+                          className="h-9 w-9 rounded-lg object-cover"
+                        />
                       ) : (
                         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10 text-xs font-bold text-brand">
                           {row.judul.charAt(0).toUpperCase()}
@@ -164,14 +204,18 @@ export function AudioTable({
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="max-w-48 truncate text-muted">{row.series?.judul ?? "-"}</TableCell>
+                  <TableCell className="max-w-48 truncate text-muted">
+                    {row.series?.judul ?? "-"}
+                  </TableCell>
                   <TableCell className="text-muted">{row.nomorSesi}</TableCell>
                   <TableCell className="text-muted">{formatDurationHuman(row.durasi)}</TableCell>
                   <TableCell>
                     {row.mediaSources.length > 0 ? (
                       <Badge variant="secondary">
                         <Video className="h-3 w-3" />
-                        {row.mediaSources[0].provider === "YOUTUBE" ? "YouTube" : row.mediaSources[0].provider}
+                        {row.mediaSources[0].provider === "YOUTUBE"
+                          ? "YouTube"
+                          : row.mediaSources[0].provider}
                       </Badge>
                     ) : (
                       <span className="text-xs text-muted">-</span>
@@ -184,16 +228,30 @@ export function AudioTable({
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">
-                      <Button size="icon" variant="ghost" aria-label="Ubah status" disabled={pending}
-                        onClick={() => run(() => setAudioStatus(row.id, !row.published))}>
-                        {row.published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        aria-label="Ubah status"
+                        disabled={pending}
+                        onClick={() => run(() => setAudioStatus(row.id, !row.published))}
+                      >
+                        {row.published ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
                       </Button>
                       <Button size="icon" variant="ghost" asChild aria-label="Edit">
                         <Link href={`/admin/audio/${row.id}/edit`}>
                           <Pencil className="h-4 w-4" />
                         </Link>
                       </Button>
-                      <Button size="icon" variant="ghost" aria-label="Hapus" onClick={() => setDeleteTarget(row)}>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        aria-label="Hapus"
+                        onClick={() => setDeleteTarget(row)}
+                      >
                         <Trash2 className="h-4 w-4 text-danger" />
                       </Button>
                     </div>
@@ -214,7 +272,11 @@ export function AudioTable({
         description={`"${deleteTarget?.judul}" akan dihapus permanen.`}
         pending={pending}
         onConfirm={() =>
-          deleteTarget && run(() => deleteAudio(deleteTarget.id), () => setDeleteTarget(null))
+          deleteTarget &&
+          run(
+            () => deleteAudio(deleteTarget.id),
+            () => setDeleteTarget(null),
+          )
         }
       />
 
@@ -224,7 +286,15 @@ export function AudioTable({
         title="Hapus data terpilih?"
         description={`${selected.length} audio akan dihapus permanen.`}
         pending={pending}
-        onConfirm={() => run(() => bulkDeleteAudio(selected), () => { clear(); setBulkDeleteOpen(false); })}
+        onConfirm={() =>
+          run(
+            () => bulkDeleteAudio(selected),
+            () => {
+              clear();
+              setBulkDeleteOpen(false);
+            },
+          )
+        }
       />
     </div>
   );

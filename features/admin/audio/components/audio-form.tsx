@@ -15,7 +15,30 @@ import { ImagePreview } from "@/features/admin/components/image-preview";
 import { slugify } from "@/utils/slugify";
 import { extractYouTubeVideoId, getYouTubeThumbnail } from "@/utils/media";
 import { audioFormSchema, type AudioFormInput } from "@/features/admin/audio/validation";
-import { createAudio, updateAudio, fetchYouTubeMetadata } from "@/features/admin/audio/actions";
+import {
+  createAudio,
+  updateAudio,
+  fetchYouTubeMetadata,
+  getNextNomorSesi,
+} from "@/features/admin/audio/actions";
+
+/** Deteksi nomor sesi dari judul (mis. "#13", "Sesi 5", "Ep. 3", "Session 2"). */
+function extractSessionNumber(title: string): number | null {
+  const patterns = [
+    /#\s*(\d+)/i,
+    /sesi\s+ke?\s*[- ]?(\d+)/i,
+    /ep\w*\s*[. ]*(\d+)/i,
+    /session\s*[- ]?(\d+)/i,
+  ];
+  for (const re of patterns) {
+    const m = title.match(re);
+    if (m) {
+      const n = Number(m[1]);
+      if (Number.isInteger(n) && n > 0) return n;
+    }
+  }
+  return null;
+}
 
 export interface AudioSeriesOption {
   id: string;
@@ -38,6 +61,7 @@ export function AudioForm({ defaultValues, audioId, seriesOptions }: AudioFormPr
   const [metaLoading, setMetaLoading] = useState(false);
   const [metaStatus, setMetaStatus] = useState<string | null>(null);
   const metaFilledForRef = useRef<string | null>(null);
+  const nomorSesiManualRef = useRef(false);
 
   const videoId = youtubeUrl ? extractYouTubeVideoId(youtubeUrl) : null;
 
@@ -83,6 +107,11 @@ export function AudioForm({ defaultValues, audioId, seriesOptions }: AudioFormPr
             if (getValues("slug") === "") setValue("slug", slugify(title));
             filled = true;
           }
+          const sesi = title ? extractSessionNumber(title) : null;
+          if (sesi && !nomorSesiManualRef.current) {
+            setValue("nomorSesi", sesi, { shouldValidate: true });
+            filled = true;
+          }
           if (durationSeconds && durationSeconds > 0 && getValues("durasi") === 0) {
             setValue("durasi", durationSeconds, { shouldValidate: true });
             filled = true;
@@ -93,7 +122,11 @@ export function AudioForm({ defaultValues, audioId, seriesOptions }: AudioFormPr
           }
           if (filled) {
             metaFilledForRef.current = youtubeUrl;
-            setMetaStatus("Judul, durasi, dan cover terisi otomatis dari video.");
+            setMetaStatus(
+              sesi && !nomorSesiManualRef.current
+                ? `Judul, durasi, cover, dan nomor sesi ${sesi} terisi otomatis dari video.`
+                : "Judul, durasi, dan cover terisi otomatis dari video.",
+            );
           }
         } else {
           setMetaStatus(result.error.message);
@@ -127,7 +160,10 @@ export function AudioForm({ defaultValues, audioId, seriesOptions }: AudioFormPr
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex max-w-2xl flex-col gap-5">
       {formError && (
-        <div role="alert" className="rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
+        <div
+          role="alert"
+          className="rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger"
+        >
           {formError}
         </div>
       )}
@@ -144,7 +180,11 @@ export function AudioForm({ defaultValues, audioId, seriesOptions }: AudioFormPr
         />
       </FormField>
 
-      <FormField label="Slug" hint="Kosongkan untuk membuat otomatis dari judul" error={errors.slug?.message}>
+      <FormField
+        label="Slug"
+        hint="Kosongkan untuk membuat otomatis dari judul"
+        error={errors.slug?.message}
+      >
         <div className="flex gap-2">
           <Input
             {...register("slug")}
@@ -171,7 +211,21 @@ export function AudioForm({ defaultValues, audioId, seriesOptions }: AudioFormPr
       </FormField>
 
       <FormField label="Series" required error={errors.seriesId?.message}>
-        <Select {...register("seriesId")} invalid={!!errors.seriesId}>
+        <Select
+          {...register("seriesId")}
+          invalid={!!errors.seriesId}
+          onChange={(e) => {
+            void register("seriesId").onChange(e);
+            if (audioId || nomorSesiManualRef.current) return;
+            const id = e.target.value;
+            if (!id) return;
+            getNextNomorSesi(id).then((result) => {
+              if (result.ok && !nomorSesiManualRef.current && getValues("seriesId") === id) {
+                setValue("nomorSesi", result.data, { shouldValidate: true });
+              }
+            });
+          }}
+        >
           <option value="">Pilih series...</option>
           {seriesOptions.map((s) => (
             <option key={s.id} value={s.id}>
@@ -188,6 +242,10 @@ export function AudioForm({ defaultValues, audioId, seriesOptions }: AudioFormPr
             min={1}
             {...register("nomorSesi", { valueAsNumber: true })}
             invalid={!!errors.nomorSesi}
+            onChange={(e) => {
+              nomorSesiManualRef.current = true;
+              void register("nomorSesi").onChange(e);
+            }}
           />
         </FormField>
         <FormField label="Durasi (detik)" required error={errors.durasi?.message}>
@@ -202,18 +260,33 @@ export function AudioForm({ defaultValues, audioId, seriesOptions }: AudioFormPr
       </div>
 
       <FormField label="Deskripsi" error={errors.deskripsi?.message}>
-        <Textarea {...register("deskripsi")} rows={4} placeholder="Deskripsi audio..." invalid={!!errors.deskripsi} />
+        <Textarea
+          {...register("deskripsi")}
+          rows={4}
+          placeholder="Deskripsi audio..."
+          invalid={!!errors.deskripsi}
+        />
       </FormField>
 
-      <FormField label="Cover" hint="Tempel URL gambar eksternal (mis. thumbnail YouTube)" error={errors.cover?.message}>
+      <FormField
+        label="Cover"
+        hint="Tempel URL gambar eksternal (mis. thumbnail YouTube)"
+        error={errors.cover?.message}
+      >
         <div className="flex flex-col gap-3">
           <Input {...register("cover")} placeholder="https://..." invalid={!!errors.cover} />
-          <ImagePreview value={getValues("cover")} onChange={(url) => setValue("cover", url, { shouldValidate: true })} />
+          <ImagePreview
+            value={getValues("cover")}
+            onChange={(url) => setValue("cover", url, { shouldValidate: true })}
+          />
         </div>
       </FormField>
 
       <FormField label="Status">
-        <Select value={published ? "true" : "false"} onChange={(e) => setPublished(e.target.value === "true")}>
+        <Select
+          value={published ? "true" : "false"}
+          onChange={(e) => setPublished(e.target.value === "true")}
+        >
           <option value="false">Draft</option>
           <option value="true">Published</option>
         </Select>
