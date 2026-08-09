@@ -241,33 +241,36 @@ export async function importPlaylistAsSeries(
       audioRows.push({ item: p.item, judul: p.judul, slug });
     }
 
-    await prisma.$transaction(async (tx) => {
-      for (const row of audioRows) {
-        await tx.audio.create({
-          data: {
-            seriesId: series.id,
-            nomorSesi: baseNomorSesi + row.item.position,
-            judul: row.judul,
-            slug: row.slug,
-            durasi: row.item.durationSeconds ?? 0,
-            cover: row.item.thumbnail,
-            published: data.published,
-            mediaSources: {
-              create: {
-                provider: "YOUTUBE",
-                providerId: row.item.videoId,
-                url: `https://www.youtube.com/watch?v=${row.item.videoId}`,
-                metadata: {
-                  embedUrl: `https://www.youtube.com/embed/${row.item.videoId}`,
-                  thumbnail: row.item.thumbnail,
+    await prisma.$transaction(
+      async (tx) => {
+        for (const row of audioRows) {
+          await tx.audio.create({
+            data: {
+              seriesId: series.id,
+              nomorSesi: baseNomorSesi + row.item.position,
+              judul: row.judul,
+              slug: row.slug,
+              durasi: row.item.durationSeconds ?? 0,
+              cover: row.item.thumbnail,
+              published: data.published,
+              mediaSources: {
+                create: {
+                  provider: "YOUTUBE",
+                  providerId: row.item.videoId,
+                  url: `https://www.youtube.com/watch?v=${row.item.videoId}`,
+                  metadata: {
+                    embedUrl: `https://www.youtube.com/embed/${row.item.videoId}`,
+                    thumbnail: row.item.thumbnail,
+                  },
                 },
               },
             },
-          },
-        });
-        imported++;
-      }
-    });
+          });
+          imported++;
+        }
+      },
+      { timeout: 120000 },
+    );
 
     await recalcSeriesTotals(series.id);
     revalidatePublic();
