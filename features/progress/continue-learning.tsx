@@ -1,13 +1,35 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Play, ArrowRight } from "lucide-react";
-import { getContinueLearning } from "@/features/progress/progress-actions";
 import { formatDurationHuman } from "@/utils/duration";
 
-export async function ContinueLearning() {
-  const progress = await getContinueLearning(5);
+interface ContinueLearningItem {
+  id: string;
+  progressPercent: number;
+  series: { cover: string | null; judul: string; slug: string };
+  lastAudio: { judul: string; slug: string; durasi: number } | null;
+}
 
-  if (progress.length === 0) {
+export function ContinueLearning() {
+  const [items, setItems] = useState<ContinueLearningItem[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/continue-learning")
+      .then((res) => (res.ok ? res.json() : { items: [] }))
+      .then((data: { items?: ContinueLearningItem[] }) => {
+        if (!cancelled) setItems(data.items ?? []);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (items.length === 0) {
     return null;
   }
 
@@ -15,7 +37,7 @@ export async function ContinueLearning() {
     <section className="flex flex-col gap-4" aria-label="Lanjutkan Belajar">
       <h2 className="text-lg font-semibold">Lanjutkan Belajar</h2>
       <div className="flex flex-col gap-3">
-        {progress.map((item) => {
+        {items.map((item) => {
           const audio = item.lastAudio;
           if (!audio) return null;
           const percent = Math.min(100, Math.max(0, Math.round(item.progressPercent)));
