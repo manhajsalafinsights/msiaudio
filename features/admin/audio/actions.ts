@@ -91,22 +91,22 @@ export async function fetchYouTubeMetadata(url: string): Promise<ActionState<You
     try {
       const res = await withRetry(() =>
         fetch(`https://www.youtube.com/watch?v=${videoId}`, {
-          headers: { "Accept-Language": "id" },
+          headers: {
+            "Accept-Language": "id",
+            "User-Agent":
+              "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          },
           signal: AbortSignal.timeout(10000),
         }),
       );
       if (res.ok) {
         const html = await res.text();
-        const m = html.match(/ytInitialPlayerResponse\s*=\s*([\s\S]*?);\s*<\/script>/);
-        if (m) {
-          const data = JSON.parse(m[1]);
-          const vd = data?.videoDetails;
-          if (vd?.title) title = vd.title;
-          const len = vd?.lengthSeconds;
-          if (len != null) {
-            const n = Number(len);
-            if (Number.isFinite(n) && n > 0) durationSeconds = n;
-          }
+        // Ekstraksi langsung dari HTML — ytInitialPlayerResponse sulit diparse
+        // karena JSON-nya diikuti data lain sehingga JSON.parse selalu gagal.
+        const len = html.match(/"lengthSeconds":"?(\d+)"?/)?.[1];
+        if (len) {
+          const n = Number(len);
+          if (Number.isFinite(n) && n > 0) durationSeconds = n;
         }
       }
     } catch {
