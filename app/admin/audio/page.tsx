@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Plus, ListPlus } from "lucide-react";
-import { listAudioAdmin } from "@/repositories/audio-repository";
+import { listAudioAdmin, countAudioDrafts } from "@/repositories/audio-repository";
 import { listAllSeries } from "@/repositories/series-repository";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/admin/page-header";
@@ -46,9 +46,10 @@ export default async function AdminAudioPage({
     ? `/admin/audio?${new URLSearchParams(backEntries).toString()}`
     : "/admin/audio";
 
-  const [seriesOptions, { items, total, totalPages }] = await Promise.all([
+  const [seriesOptions, { items, total, totalPages }, draftCount] = await Promise.all([
     listAllSeries(),
     listAudioAdmin({ q: params.q, page, perPage, status, seriesId, sort }),
+    countAudioDrafts(seriesId || undefined),
   ]);
 
   const rows = items.map((a) => ({
@@ -97,6 +98,7 @@ export default async function AdminAudioPage({
         perPage={perPage}
         sortFilter={sort}
         backHref={backHref}
+        draftCount={draftCount}
       />
     </div>
   );

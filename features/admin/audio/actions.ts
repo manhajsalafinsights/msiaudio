@@ -440,6 +440,26 @@ export async function bulkAudioStatus(ids: string[], published: boolean): Promis
   }
 }
 
+export async function publishAllDrafts(seriesId?: string): Promise<ActionState> {
+  try {
+    await requireAdmin();
+    const where: Prisma.AudioWhereInput = { published: false };
+    if (seriesId) where.seriesId = seriesId;
+    await prisma.audio.updateMany({ where, data: { published: true } });
+    if (seriesId) await recalcSeriesTotals(seriesId);
+    revalidatePublic();
+    return { ok: true, data: undefined };
+  } catch (error) {
+    return {
+      ok: false,
+      error: {
+        code: "UNKNOWN_ERROR",
+        message: error instanceof Error ? error.message : "Gagal publish semua draft",
+      },
+    };
+  }
+}
+
 export async function bulkDeleteAudio(ids: string[]): Promise<ActionState> {
   try {
     await requireAdmin();

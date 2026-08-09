@@ -224,6 +224,13 @@ export async function countPublishedAudio(q?: string) {
   });
 }
 
+/** Jumlah audio berstatus draft, dibatasi ke satu series bila diberikan. */
+export async function countAudioDrafts(seriesId?: string) {
+  return prisma.audio.count({
+    where: { ...(seriesId ? { seriesId } : {}), published: false },
+  });
+}
+
 /** Daftar audio published + filter berlapis (AND antar filter). Hanya konten publik. */
 export async function listPublishedAudioFiltered(opts: PublishedAudioFilter) {
   const { page = 1, perPage = 20 } = opts;

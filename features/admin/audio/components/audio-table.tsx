@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Pencil, Trash2, Eye, EyeOff, Video } from "lucide-react";
+import { Pencil, Trash2, Eye, EyeOff, Video, Rocket } from "lucide-react";
 import {
   Table,
   TableHeader,
@@ -26,6 +26,7 @@ import {
   deleteAudio,
   bulkAudioStatus,
   bulkDeleteAudio,
+  publishAllDrafts,
 } from "@/features/admin/audio/actions";
 
 interface AudioRow {
@@ -51,6 +52,7 @@ interface AudioTableProps {
   perPage: number;
   sortFilter: string;
   backHref: string;
+  draftCount: number;
 }
 
 export function AudioTable({
@@ -64,6 +66,7 @@ export function AudioTable({
   perPage,
   sortFilter,
   backHref,
+  draftCount,
 }: AudioTableProps) {
   const router = useRouter();
   const { pending, error, run } = useAdminAction(() => router.refresh());
@@ -113,6 +116,18 @@ export function AudioTable({
               },
             ]}
           />
+
+          {draftCount > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={pending}
+              onClick={() => run(() => publishAllDrafts(seriesFilter || undefined))}
+            >
+              <Rocket className="h-4 w-4" />
+              Publish Semua Draft ({draftCount})
+            </Button>
+          )}
 
           {selected.length > 0 && (
             <div className="flex items-center gap-2">
