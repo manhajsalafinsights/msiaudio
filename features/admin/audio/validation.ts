@@ -12,7 +12,11 @@ export const audioFormSchema = z.object({
   seriesId: z.string().min(1, "Pilih series"),
   nomorSesi: z.number().int().min(1, "Nomor sesi minimal 1"),
   deskripsi: z.string().trim().max(5000, "Maksimal 5000 karakter"),
-  durasi: z.number().int().min(0, "Durasi tidak valid").max(86400 * 10, "Durasi terlalu besar"),
+  durasi: z
+    .number()
+    .int()
+    .min(0, "Durasi tidak valid")
+    .max(86400 * 10, "Durasi terlalu besar"),
   cover: z
     .string()
     .trim()

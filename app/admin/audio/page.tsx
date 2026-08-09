@@ -33,6 +33,19 @@ export default async function AdminAudioPage({
     ? (params.sort as "sesi-asc" | "sesi-desc" | "terbaru")
     : "sesi-asc";
 
+  // Kembali ke view yang sama (filter) setelah tambah/edit audio.
+  const backEntries: [string, string][] = [];
+  if (params.q) backEntries.push(["q", params.q]);
+  if (params.status === "PUBLISHED" || params.status === "DRAFT")
+    backEntries.push(["status", params.status]);
+  if (params.seriesId) backEntries.push(["seriesId", params.seriesId]);
+  if (params.sort && SORT_OPTIONS.includes(params.sort)) backEntries.push(["sort", params.sort]);
+  if (params.perPage && PER_PAGE_OPTIONS.includes(Number(params.perPage)))
+    backEntries.push(["perPage", params.perPage]);
+  const backHref = backEntries.length
+    ? `/admin/audio?${new URLSearchParams(backEntries).toString()}`
+    : "/admin/audio";
+
   const [seriesOptions, { items, total, totalPages }] = await Promise.all([
     listAllSeries(),
     listAudioAdmin({ q: params.q, page, perPage, status, seriesId, sort }),
@@ -57,7 +70,7 @@ export default async function AdminAudioPage({
         description="Kelola rekaman audio setiap sesi"
         action={
           <Button asChild>
-            <Link href="/admin/audio/new">
+            <Link href={`/admin/audio/new?back=${encodeURIComponent(backHref)}`}>
               <Plus className="h-4 w-4" />
               Tambah Audio
             </Link>
@@ -75,6 +88,7 @@ export default async function AdminAudioPage({
         seriesOptions={seriesOptions}
         perPage={perPage}
         sortFilter={sort}
+        backHref={backHref}
       />
     </div>
   );

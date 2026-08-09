@@ -50,6 +50,7 @@ interface AudioTableProps {
   seriesOptions: { id: string; judul: string }[];
   perPage: number;
   sortFilter: string;
+  backHref: string;
 }
 
 export function AudioTable({
@@ -62,6 +63,7 @@ export function AudioTable({
   seriesOptions,
   perPage,
   sortFilter,
+  backHref,
 }: AudioTableProps) {
   const router = useRouter();
   const { pending, error, run } = useAdminAction(() => router.refresh());
@@ -242,7 +244,9 @@ export function AudioTable({
                         )}
                       </Button>
                       <Button size="icon" variant="ghost" asChild aria-label="Edit">
-                        <Link href={`/admin/audio/${row.id}/edit`}>
+                        <Link
+                          href={`/admin/audio/${row.id}/edit?back=${encodeURIComponent(backHref)}`}
+                        >
                           <Pencil className="h-4 w-4" />
                         </Link>
                       </Button>

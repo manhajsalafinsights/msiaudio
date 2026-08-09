@@ -49,9 +49,11 @@ interface AudioFormProps {
   defaultValues?: Partial<AudioFormInput>;
   audioId?: string;
   seriesOptions: AudioSeriesOption[];
+  /** Redirect setelah simpan (biasanya /admin/audio + filter aktif). */
+  backHref?: string;
 }
 
-export function AudioForm({ defaultValues, audioId, seriesOptions }: AudioFormProps) {
+export function AudioForm({ defaultValues, audioId, seriesOptions, backHref }: AudioFormProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
@@ -149,7 +151,7 @@ export function AudioForm({ defaultValues, audioId, seriesOptions }: AudioFormPr
     startTransition(async () => {
       const result = audioId ? await updateAudio(audioId, payload) : await createAudio(payload);
       if (result.ok) {
-        router.push("/admin/audio");
+        router.push(backHref ?? "/admin/audio");
         router.refresh();
       } else {
         setFormError(result.error.message);
@@ -356,7 +358,11 @@ export function AudioForm({ defaultValues, audioId, seriesOptions }: AudioFormPr
           <Save className="h-4 w-4" />
           {pending ? "Menyimpan..." : "Simpan"}
         </Button>
-        <Button type="button" variant="outline" onClick={() => router.push("/admin/audio")}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.push(backHref ?? "/admin/audio")}
+        >
           Batal
         </Button>
       </div>
