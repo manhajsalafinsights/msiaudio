@@ -27,18 +27,38 @@ import {
 } from "@/features/admin/playlist/actions";
 
 type SeriesTypeOption = { id: string; nama: string; slug: string };
+type SeriesOption = {
+  id: string;
+  judul: string;
+  seriesType?: { nama: string } | null;
+};
 
-export function PlaylistImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[] }) {
+export function PlaylistImport({
+  seriesTypes,
+  seriesOptions,
+}: {
+  seriesTypes: SeriesTypeOption[];
+  seriesOptions: SeriesOption[];
+}) {
   const [url, setUrl] = useState("");
   const [preview, setPreview] = useState<PlaylistPreview | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [mode, setMode] = useState<"new" | "existing">("new");
   const [seriesTypeId, setSeriesTypeId] = useState("");
+  const [targetSeriesId, setTargetSeriesId] = useState("");
   const [published, setPublished] = useState(false);
   const [cleanTitles, setCleanTitles] = useState(true);
   const [summary, setSummary] = useState<ImportSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [importing, startImport] = useTransition();
+
+  const seriesGroups = seriesOptions.reduce<Record<string, SeriesOption[]>>((acc, s) => {
+    const key = s.seriesType?.nama?.trim() ? s.seriesType.nama : "Tanpa Tipe";
+    (acc[key] ||= []).push(s);
+    return acc;
+  }, {});
+  const seriesGroupKeys = Object.keys(seriesGroups).sort((a, b) => a.localeCompare(b));
 
   const loadPlaylist = () => {
     setError(null);
@@ -79,7 +99,9 @@ export function PlaylistImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[
     startImport(async () => {
       const res = await importPlaylistAsSeries({
         playlistUrl: url,
-        seriesTypeId,
+        mode,
+        seriesTypeId: mode === "new" ? seriesTypeId : undefined,
+        targetSeriesId: mode === "existing" ? targetSeriesId : undefined,
         published,
         cleanTitles,
         selectedVideoIds: [...selected],
@@ -96,7 +118,9 @@ export function PlaylistImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[
     setUrl("");
     setPreview(null);
     setSelected(new Set());
+    setMode("new");
     setSeriesTypeId("");
+    setTargetSeriesId("");
     setSummary(null);
     setError(null);
   };
@@ -269,34 +293,99 @@ export function PlaylistImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[
           <div className="card card-msi flex flex-col gap-4 p-5">
             <h3 className="text-sm font-bold">Pengaturan Import</h3>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="series-type" className="mb-1.5 block text-sm font-medium">
-                  Kitab / Tipe Series
-                </label>
-                <Select
-                  id="series-type"
-                  value={seriesTypeId}
-                  onChange={(e) => setSeriesTypeId(e.target.value)}
-                  invalid={!seriesTypeId}
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-medium">Tujuan audio</span>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => setMode("new")}
+                  className={cn(
+                    "flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+                    mode === "new"
+                      ? "border-brand bg-brand/10 text-brand"
+                      : "border-border bg-surface text-muted hover:text-foreground",
+                  )}
                 >
-                  <option value="">Pilih kitab...</option>
-                  {seriesTypes.map((st) => (
-                    <option key={st.id} value={st.id}>
-                      {st.nama}
-                    </option>
-                  ))}
-                </Select>
-                {seriesTypes.length === 0 && (
-                  <p className="mt-1.5 text-xs text-muted">
-                    Belum ada kitab. Buat dulu di menu{" "}
-                    <Link href="/admin/kitab" className="text-brand hover:underline">
-                      Kitab
-                    </Link>
-                    .
-                  </p>
-                )}
+                  Series Baru
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("existing")}
+                  className={cn(
+                    "flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+                    mode === "existing"
+                      ? "border-brand bg-brand/10 text-brand"
+                      : "border-border bg-surface text-muted hover:text-foreground",
+                  )}
+                >
+                  Tambah ke Series yang Ada
+                </button>
               </div>
+              <p className="text-xs text-muted">
+                {mode === "new"
+                  ? "Buat series baru dari playlist ini. Tipe Tematik otomatis digabung ke series penampung 'Tematik'."
+                  : "Audio ditambahkan ke series pilihan; nomor sesi melanjutkan sesi terakhir series tersebut."}
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {mode === "new" ? (
+                <div>
+                  <label htmlFor="series-type" className="mb-1.5 block text-sm font-medium">
+                    Kitab / Tipe Series
+                  </label>
+                  <Select
+                    id="series-type"
+                    value={seriesTypeId}
+                    onChange={(e) => setSeriesTypeId(e.target.value)}
+                    invalid={!seriesTypeId}
+                  >
+                    <option value="">Pilih kitab...</option>
+                    {seriesTypes.map((st) => (
+                      <option key={st.id} value={st.id}>
+                        {st.nama}
+                      </option>
+                    ))}
+                  </Select>
+                  {seriesTypes.length === 0 && (
+                    <p className="mt-1.5 text-xs text-muted">
+                      Belum ada kitab. Buat dulu di menu{" "}
+                      <Link href="/admin/kitab" className="text-brand hover:underline">
+                        Kitab
+                      </Link>
+                      .
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <label htmlFor="target-series" className="mb-1.5 block text-sm font-medium">
+                    Series Tujuan
+                  </label>
+                  <Select
+                    id="target-series"
+                    value={targetSeriesId}
+                    onChange={(e) => setTargetSeriesId(e.target.value)}
+                    invalid={!targetSeriesId}
+                  >
+                    <option value="">Pilih series tujuan...</option>
+                    {seriesGroupKeys.map((group) => (
+                      <optgroup key={group} label={group}>
+                        {seriesGroups[group].map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.judul}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </Select>
+                  {seriesOptions.length === 0 && (
+                    <p className="mt-1.5 text-xs text-muted">
+                      Belum ada series. Buat dulu lewat mode &quot;Series Baru&quot;.
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="flex items-end gap-3">
                 <Button
@@ -321,13 +410,17 @@ export function PlaylistImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[
               <p className="flex items-center gap-2 text-sm text-muted">
                 <ListMusic className="h-4 w-4" aria-hidden />
                 <span>
-                  <strong className="text-foreground">{selectedCount}</strong> video siap diimpor
-                  sebagai series baru
+                  <strong className="text-foreground">{selectedCount}</strong> video siap diimpor{" "}
+                  {mode === "existing" ? "ke series tujuan" : "sebagai series baru"}
                 </span>
               </p>
               <Button
                 size="lg"
-                disabled={importing || selectedCount === 0 || !seriesTypeId}
+                disabled={
+                  importing ||
+                  selectedCount === 0 ||
+                  (mode === "new" ? !seriesTypeId : !targetSeriesId)
+                }
                 onClick={handleImport}
               >
                 {importing ? (

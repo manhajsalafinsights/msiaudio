@@ -43,6 +43,7 @@ function extractSessionNumber(title: string): number | null {
 export interface AudioSeriesOption {
   id: string;
   judul: string;
+  seriesType?: { nama: string } | null;
 }
 
 interface AudioFormProps {
@@ -66,6 +67,13 @@ export function AudioForm({ defaultValues, audioId, seriesOptions, backHref }: A
   const nomorSesiManualRef = useRef(false);
 
   const videoId = youtubeUrl ? extractYouTubeVideoId(youtubeUrl) : null;
+
+  const seriesGroups = seriesOptions.reduce<Record<string, AudioSeriesOption[]>>((acc, s) => {
+    const key = s.seriesType?.nama?.trim() ? s.seriesType.nama : "Tanpa Tipe";
+    (acc[key] ||= []).push(s);
+    return acc;
+  }, {});
+  const seriesGroupKeys = Object.keys(seriesGroups).sort((a, b) => a.localeCompare(b));
 
   const {
     register,
@@ -229,10 +237,14 @@ export function AudioForm({ defaultValues, audioId, seriesOptions, backHref }: A
           }}
         >
           <option value="">Pilih series...</option>
-          {seriesOptions.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.judul}
-            </option>
+          {seriesGroupKeys.map((group) => (
+            <optgroup key={group} label={group}>
+              {seriesGroups[group].map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.judul}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </Select>
       </FormField>

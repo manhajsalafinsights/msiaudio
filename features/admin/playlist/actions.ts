@@ -40,13 +40,32 @@ export type ImportSummary = {
   skippedSesiConflict: number;
 };
 
-const confirmSchema = z.object({
-  playlistUrl: z.string().trim().min(1, "URL playlist wajib diisi"),
-  seriesTypeId: z.string().min(1, "Pilih kitab/tipe series"),
-  published: z.boolean(),
-  cleanTitles: z.boolean(),
-  selectedVideoIds: z.array(z.string()).min(1, "Pilih minimal 1 video"),
-});
+const confirmSchema = z
+  .object({
+    playlistUrl: z.string().trim().min(1, "URL playlist wajib diisi"),
+    mode: z.enum(["new", "existing"]).default("new"),
+    seriesTypeId: z.string().optional(),
+    targetSeriesId: z.string().optional(),
+    published: z.boolean(),
+    cleanTitles: z.boolean(),
+    selectedVideoIds: z.array(z.string()).min(1, "Pilih minimal 1 video"),
+  })
+  .superRefine((val, ctx) => {
+    if (val.mode === "new" && !val.seriesTypeId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["seriesTypeId"],
+        message: "Pilih kitab/tipe series",
+      });
+    }
+    if (val.mode === "existing" && !val.targetSeriesId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["targetSeriesId"],
+        message: "Pilih series tujuan",
+      });
+    }
+  });
 
 /** Ambil daftar video playlist untuk preview + tandai video yang sudah dipakai. */
 export async function previewPlaylist(playlistUrl: string): Promise<ActionState<PlaylistPreview>> {
@@ -109,9 +128,11 @@ function cleanLeadingNumber(title: string): string {
 }
 
 /**
- * Impor video playlist sebagai SERIES BARU + semua audionya.
- * Khusus tipe Tematik: audio ditambahkan ke series penampung "Tematik" yang
- * sudah ada (tidak membuat series baru per playlist).
+ * Impor video playlist ke dalam series.
+ * - mode "new": buat SERIES BARU (judul = judul playlist). Khusus tipe
+ *   Tematik, audio digabung ke series penampung "Tematik" yang sudah ada.
+ * - mode "existing": tambahkan audio ke series yang dipilih (nomor sesi
+ *   melanjutkan sesi terakhir series tersebut).
  * Duplikat video (sudah dipakai audio lain) dilewati dan dilaporkan —
  * bukan mengagalkan seluruh import.
  */
@@ -146,57 +167,77 @@ export async function importPlaylistAsSeries(
       };
     }
 
-    const seriesType = await prisma.seriesType.findUnique({
-      where: { id: data.seriesTypeId },
-      select: { id: true, slug: true },
-    });
-    if (!seriesType) {
-      return {
-        ok: false,
-        error: { code: "VALIDATION_ERROR", message: "Kitab/tipe series tidak ditemukan" },
-      };
-    }
-
-    // Target series: untuk tipe Tematik gabung ke series penampung "Tematik",
-    // untuk tipe lain selalu buat series baru (judul = judul playlist).
+    // Target series: mode "existing" menambahkan ke series yang dipilih;
+    // mode "new" membuat series baru (kecuali tipe Tematik yang digabung ke
+    // series penampung "Tematik" yang sudah ada).
     let series: { id: string; judul: string; slug: string };
     let baseNomorSesi = 0;
 
-    if (seriesType.slug === "tematik") {
-      const existing = await prisma.series.findFirst({
-        where: { seriesTypeId: seriesType.id, slug: "tematik" },
+    if (data.mode === "existing") {
+      const target = await prisma.series.findUnique({
+        where: { id: data.targetSeriesId! },
+        select: { id: true, judul: true, slug: true },
       });
-      if (existing) {
-        series = { id: existing.id, judul: existing.judul, slug: existing.slug };
-        const agg = await prisma.audio.aggregate({
-          where: { seriesId: existing.id },
-          _max: { nomorSesi: true },
+      if (!target) {
+        return {
+          ok: false,
+          error: { code: "VALIDATION_ERROR", message: "Series tujuan tidak ditemukan" },
+        };
+      }
+      series = target;
+      const agg = await prisma.audio.aggregate({
+        where: { seriesId: target.id },
+        _max: { nomorSesi: true },
+      });
+      baseNomorSesi = agg._max.nomorSesi ?? 0;
+    } else {
+      const seriesType = await prisma.seriesType.findUnique({
+        where: { id: data.seriesTypeId },
+        select: { id: true, slug: true },
+      });
+      if (!seriesType) {
+        return {
+          ok: false,
+          error: { code: "VALIDATION_ERROR", message: "Kitab/tipe series tidak ditemukan" },
+        };
+      }
+
+      if (seriesType.slug === "tematik") {
+        const existing = await prisma.series.findFirst({
+          where: { seriesTypeId: seriesType.id, slug: "tematik" },
         });
-        baseNomorSesi = agg._max.nomorSesi ?? 0;
+        if (existing) {
+          series = { id: existing.id, judul: existing.judul, slug: existing.slug };
+          const agg = await prisma.audio.aggregate({
+            where: { seriesId: existing.id },
+            _max: { nomorSesi: true },
+          });
+          baseNomorSesi = agg._max.nomorSesi ?? 0;
+        } else {
+          const created = await prisma.series.create({
+            data: {
+              judul: "Tematik",
+              slug: await uniqueSlug("tematik", (s) => seriesSlugExists(s)),
+              cover: items[0]?.thumbnail ?? null,
+              seriesTypeId: data.seriesTypeId!,
+              published: data.published,
+            },
+          });
+          series = { id: created.id, judul: created.judul, slug: created.slug };
+        }
       } else {
+        const seriesTitle = result.playlistTitle || "Playlist";
         const created = await prisma.series.create({
           data: {
-            judul: "Tematik",
-            slug: await uniqueSlug("tematik", (s) => seriesSlugExists(s)),
+            judul: seriesTitle,
+            slug: await uniqueSlug(slugify(seriesTitle), (s) => seriesSlugExists(s)),
             cover: items[0]?.thumbnail ?? null,
-            seriesTypeId: data.seriesTypeId,
+            seriesTypeId: data.seriesTypeId!,
             published: data.published,
           },
         });
         series = { id: created.id, judul: created.judul, slug: created.slug };
       }
-    } else {
-      const seriesTitle = result.playlistTitle || "Playlist";
-      const created = await prisma.series.create({
-        data: {
-          judul: seriesTitle,
-          slug: await uniqueSlug(slugify(seriesTitle), (s) => seriesSlugExists(s)),
-          cover: items[0]?.thumbnail ?? null,
-          seriesTypeId: data.seriesTypeId,
-          published: data.published,
-        },
-      });
-      series = { id: created.id, judul: created.judul, slug: created.slug };
     }
 
     const existingMedia = await prisma.mediaSource.findMany({

@@ -262,7 +262,11 @@ export async function recalcSeriesTotals(seriesId: string) {
 
 export async function listAllSeries() {
   return prisma.series.findMany({
-    select: { id: true, judul: true },
+    select: {
+      id: true,
+      judul: true,
+      seriesType: { select: { nama: true, slug: true } },
+    },
     orderBy: { judul: "asc" },
   });
 }
