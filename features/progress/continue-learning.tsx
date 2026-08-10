@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Play, ArrowRight } from "lucide-react";
+import { Play } from "lucide-react";
 import { formatDurationHuman } from "@/utils/duration";
 
 interface ContinueLearningItem {
@@ -45,15 +45,15 @@ export function ContinueLearning() {
           return (
             <div
               key={item.id}
-              className="group flex items-center gap-4 rounded-xl border border-border bg-surface p-4 transition-all hover:shadow-sm hover:border-brand/30"
+              className="group flex items-center gap-3 rounded-2xl border border-brand/15 bg-surface p-3 transition-all hover:border-brand/30 hover:shadow-sm"
             >
-              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-brand/10">
+              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-brand/10">
                 {item.series.cover ? (
                   <Image
                     src={item.series.cover}
                     alt={item.series.judul}
                     fill
-                    sizes="56px"
+                    sizes="48px"
                     className="object-cover"
                   />
                 ) : (
@@ -81,16 +81,16 @@ export function ContinueLearning() {
                       style={{ width: `${percent}%` }}
                     />
                   </div>
-                  <span className="shrink-0 text-xs font-medium text-brand">{percent}%</span>
+                  <span className="shrink-0 text-xs font-semibold text-brand">{percent}%</span>
                 </div>
               </div>
 
               <Link
                 href={`/audio/${audio.slug}`}
-                className="flex shrink-0 items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-xs font-medium text-white transition-opacity hover:opacity-90"
+                aria-label={`Lanjutkan ${audio.judul}`}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand text-white transition-all hover:bg-brand-hover hover:shadow-md active:scale-95"
               >
-                Lanjutkan
-                <ArrowRight className="h-3.5 w-3.5" />
+                <Play className="h-5 w-5 fill-current" />
               </Link>
             </div>
           );

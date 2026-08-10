@@ -1,5 +1,4 @@
 import { BarChart3 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { WeeklyActivityEntry } from "@/repositories/dashboard-repository";
 
@@ -10,24 +9,29 @@ export function WeeklyActivity({ days }: { days: WeeklyActivityEntry[] }) {
   const total = days.reduce((sum, d) => sum + d.count, 0);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Aktivitas Mingguan</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <section className="rounded-2xl border border-border bg-surface p-4" aria-label="Aktivitas mingguan">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Aktivitas Mingguan</h2>
+        {total > 0 && <span className="text-xs text-muted">{total} sesi</span>}
+      </div>
+      <div className="mt-4">
         {total === 0 ? (
           <EmptyState
             icon={BarChart3}
             title="Belum ada aktivitas minggu ini"
             description="Mulai mendengarkan kajian untuk melihat grafik aktivitasmu."
-            className="py-10"
+            className="py-8"
           />
         ) : (
-          <div className="flex items-end justify-between gap-2 sm:gap-3" role="img" aria-label={`Grafik aktivitas mendengarkan 7 hari terakhir, total ${total} sesi`}>
+          <div
+            className="flex items-end justify-between gap-1.5 sm:gap-2"
+            role="img"
+            aria-label={`Grafik aktivitas mendengarkan 7 hari terakhir, total ${total} sesi`}
+          >
             {days.map((day) => (
-              <div key={day.date} className="flex flex-1 flex-col items-center gap-2">
+              <div key={day.date} className="flex flex-1 flex-col items-center gap-1.5">
                 <span className="text-[10px] font-medium text-muted">{day.count}</span>
-                <div className="flex h-28 w-full items-end rounded-md bg-border/40">
+                <div className="flex h-20 w-full items-end overflow-hidden rounded-md bg-border/40">
                   <div
                     className="w-full rounded-md bg-brand transition-all"
                     style={{ height: `${Math.max(4, (day.count / max) * 100)}%` }}
@@ -36,12 +40,11 @@ export function WeeklyActivity({ days }: { days: WeeklyActivityEntry[] }) {
                 <span className="text-[10px] font-medium text-muted">
                   {WEEKDAY_LABELS[new Date(`${day.date}T00:00:00`).getDay()]}
                 </span>
-                <span className="text-[10px] text-muted">{day.label}</span>
               </div>
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

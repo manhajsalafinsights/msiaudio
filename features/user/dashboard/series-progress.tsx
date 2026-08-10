@@ -21,13 +21,13 @@ function SeriesRow({ item, isCompleted }: { item: SeriesProgressItem; isComplete
         href={`/series/${item.series.slug}`}
         className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-all hover:border-brand/30 hover:shadow-sm"
       >
-        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-brand/10">
+        <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-brand/10">
           {item.series.cover ? (
             <Image
               src={item.series.cover}
               alt={item.series.judul}
               fill
-              sizes="48px"
+              sizes="44px"
               className="object-cover"
             />
           ) : (
@@ -50,7 +50,7 @@ function SeriesRow({ item, isCompleted }: { item: SeriesProgressItem; isComplete
               : `${item.completedCount} dari ${item.series.totalSesi} sesi`}
           </p>
 
-          <div className="mt-2 flex items-center gap-3">
+          <div className="mt-1.5 flex items-center gap-3">
             <ProgressBar value={percent} className="flex-1" />
             <span className="shrink-0 text-xs font-medium text-brand">
               {isCompleted ? "Selesai" : `${percent}%`}
@@ -84,18 +84,18 @@ export function SeriesProgress({ inProgress, completed }: SeriesProgressProps) {
         <h2 className="text-lg font-semibold">Kemajuan Series</h2>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-2">
         <div className="flex flex-col gap-3">
           <h3 className="flex items-center gap-2 text-sm font-semibold text-muted">
             Series Saya
             <span className="text-xs">{inProgress.length}</span>
           </h3>
           {inProgress.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-border bg-surface p-6 text-center text-sm text-muted">
+            <p className="rounded-xl border border-dashed border-border bg-surface p-4 text-center text-sm text-muted">
               Belum ada series yang sedang berjalan
             </p>
           ) : (
-            <ul className="flex flex-col gap-3">
+            <ul className="flex flex-col gap-2">
               {inProgress.map((item) => (
                 <SeriesRow key={item.id} item={item} isCompleted={false} />
               ))}
@@ -109,11 +109,11 @@ export function SeriesProgress({ inProgress, completed }: SeriesProgressProps) {
             <span className="text-xs">{completed.length}</span>
           </h3>
           {completed.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-border bg-surface p-6 text-center text-sm text-muted">
+            <p className="rounded-xl border border-dashed border-border bg-surface p-4 text-center text-sm text-muted">
               Belum ada series yang selesai
             </p>
           ) : (
-            <ul className="flex flex-col gap-3">
+            <ul className="flex flex-col gap-2">
               {completed.map((item) => (
                 <SeriesRow key={item.id} item={item} isCompleted />
               ))}

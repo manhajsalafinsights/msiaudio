@@ -47,20 +47,20 @@ export function RecentlyPlayed({ items }: RecentlyPlayedProps) {
           }
         />
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-2">
           {items.map((item) => (
             <li key={item.id}>
               <Link
                 href={`/audio/${item.audio.slug}`}
-                className="group flex items-center gap-4 rounded-xl border border-border bg-surface p-3 transition-all hover:border-brand/30 hover:shadow-sm"
+                className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-all hover:border-brand/30 hover:shadow-sm"
               >
-                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-brand/10">
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-brand/10">
                   {item.audio.cover ? (
                     <Image
                       src={item.audio.cover}
                       alt={item.audio.judul}
                       fill
-                      sizes="56px"
+                      sizes="48px"
                       className="object-cover"
                     />
                   ) : (

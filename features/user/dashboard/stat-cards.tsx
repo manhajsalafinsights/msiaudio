@@ -39,12 +39,10 @@ export function StatCards({ statistics }: StatCardsProps) {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6" aria-label="Statistik belajar">
       {items.map((item) => (
-        <div key={item.label} className="rounded-xl border border-border bg-surface p-4">
-          <div className="flex items-center gap-2 text-muted">
-            <item.icon className="h-4 w-4" aria-hidden />
-            <p className="text-xs">{item.label}</p>
-          </div>
-          <p className="mt-2 text-xl font-bold tracking-tight">{item.value}</p>
+        <div key={item.label} className="rounded-2xl bg-surface p-4">
+          <item.icon className="h-5 w-5 text-brand" aria-hidden />
+          <p className="mt-3 text-2xl font-bold tracking-tight">{item.value}</p>
+          <p className="mt-0.5 text-xs text-muted">{item.label}</p>
         </div>
       ))}
     </div>

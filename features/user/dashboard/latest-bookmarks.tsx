@@ -43,18 +43,18 @@ export function LatestBookmarks({ items }: LatestBookmarksProps) {
                 href={`/audio/${item.audio.slug}`}
                 className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-all hover:border-brand/30 hover:shadow-sm"
               >
-                <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-brand/10">
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-brand/10">
                   {item.audio.cover ? (
                     <Image
                       src={item.audio.cover}
                       alt={item.audio.judul}
                       fill
-                      sizes="44px"
+                      sizes="48px"
                       className="object-cover"
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-brand">
-                      <Bookmark className="h-4 w-4" />
+                      <Bookmark className="h-5 w-5" />
                     </div>
                   )}
                 </div>
@@ -62,7 +62,7 @@ export function LatestBookmarks({ items }: LatestBookmarksProps) {
                   <p className="truncate text-sm font-medium group-hover:text-brand">
                     {item.audio.judul}
                   </p>
-                  <p className="truncate text-xs text-muted">
+                  <p className="mt-0.5 truncate text-xs text-muted">
                     {item.audio.series.judul} · {formatDurationHuman(item.audio.durasi)}
                   </p>
                 </div>
