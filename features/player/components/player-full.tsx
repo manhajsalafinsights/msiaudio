@@ -244,10 +244,10 @@ export function PlayerFull({ audio, sessions, completedSessions, transcript }: P
         </div>
       )}
 
-      {/* Player Card - desktop: 2 kolom horizontal (artwork kiri, kontrol kanan);
-          mobile: tetap vertikal. */}
-      <div className="card card-outlined mx-auto w-full max-w-3xl p-5 sm:p-8">
-        <div className="flex flex-col gap-6 md:grid md:grid-cols-[minmax(0,20rem)_1fr] md:items-center md:gap-10">
+      {/* Player Card - selebar penuh container (sejajar dengan konten di sekitarnya).
+          Desktop: 2 kolom horizontal (artwork kiri, kontrol kanan); mobile: vertikal. */}
+      <div className="card card-outlined w-full p-5 sm:p-8">
+        <div className="flex flex-col gap-6 md:grid md:grid-cols-[minmax(0,19rem)_1fr] md:items-center md:gap-8 lg:grid-cols-[minmax(0,21rem)_1fr] lg:gap-12">
           {/* Kiri: artwork */}
           <div className="flex items-center justify-center">
             <PlayerCover
