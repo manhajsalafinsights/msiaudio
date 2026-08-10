@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Music, BookOpen, User, Eye } from "lucide-react";
+import { Music, BookOpen, User, Headset } from "lucide-react";
 import { countPublishedAudio } from "@/repositories/audio-repository";
 import { countPublishedSeries } from "@/repositories/series-repository";
 import { countActiveSpeakers } from "@/repositories/speaker-repository";
@@ -26,7 +26,7 @@ async function HomeStatsContent() {
     { value: audioCount, label: "Kajian", icon: Music },
     { value: seriesCount, label: "Series", icon: BookOpen },
     { value: speakerCount, label: "Pemateri", icon: User },
-    { value: userCount, label: "Pengguna", icon: Eye },
+    { value: userCount, label: "Pengguna", icon: Headset },
   ];
 
   return (
