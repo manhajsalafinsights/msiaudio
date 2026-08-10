@@ -64,6 +64,7 @@ enum TranscriptProvider {
   OPENAI
   WHISPER
   MANUAL
+  YOUTUBE
 }
 
 // Tipe lampiran materi pendukung sebuah audio.
@@ -364,6 +365,8 @@ model Transcript {
   language  String             @default("id")
   provider  TranscriptProvider
   content   String? // null saat masih pending/processing
+  // Segmen ber-timestamp untuk tampilan karaoke: [{ start, end, text }] (detik).
+  segments  Json?
   status    TranscriptStatus   @default(PENDING)
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt

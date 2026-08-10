@@ -17,6 +17,8 @@ import { ProgressSeries } from "@/features/player/components/player-progress-ser
 import { SessionList } from "@/features/player/components/player-session-list";
 import { NoteEditor } from "@/features/note/note-editor";
 import { useProgressReporter } from "@/features/progress/use-progress";
+import { PlayerTranscript } from "@/features/player/components/player-transcript";
+import type { TranscriptSegment } from "@/utils/youtube-captions";
 
 const isDevelopment = process.env.NODE_ENV === "development";
 // Panel debug disembunyikan secara default. Aktifkan dengan mengganti menjadi `true`.
@@ -36,9 +38,11 @@ interface PlayerFullProps {
   }[];
   /** Jumlah sesi yang benar-benar selesai didengarkan. */
   completedSessions?: number;
+  /** Transkrip ber-timestamp untuk tampilan karaoke. */
+  transcript?: { segments: TranscriptSegment[]; language: string } | null;
 }
 
-export function PlayerFull({ audio, sessions, completedSessions }: PlayerFullProps) {
+export function PlayerFull({ audio, sessions, completedSessions, transcript }: PlayerFullProps) {
   const { isPlayerReady, initialize, playerError } = usePlayerProvider();
   const { audio: currentAudio, status, position, duration, config, error } = usePlayer();
   const actions = usePlayerActions();
@@ -201,9 +205,15 @@ export function PlayerFull({ audio, sessions, completedSessions }: PlayerFullPro
     {
       id: "transcript",
       label: "Transcript",
-      content: (
-        <p className="text-muted">Transcript akan tersedia segera.</p>
-      ),
+      content:
+        transcript && transcript.segments.length > 0 ? (
+          <PlayerTranscript
+            segments={transcript.segments}
+            language={transcript.language}
+          />
+        ) : (
+          <p className="text-muted">Transcript akan tersedia segera.</p>
+        ),
     },
   ];
 

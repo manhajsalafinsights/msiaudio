@@ -10,47 +10,86 @@ interface PlayerCoverProps {
   isPlaying: boolean;
 }
 
+/** CD (piringan) yang dimiringkan dan berputar saat diputar. */
 export function PlayerCover({ src, alt, isPlaying }: PlayerCoverProps) {
   return (
-    <div className="relative flex items-center justify-center">
+    <div className="relative flex items-center justify-center py-2" style={{ perspective: "1200px" }}>
       {/* Dynamic glow effect */}
       <div
         className={cn(
-          "absolute inset-0 rounded-full bg-brand/10 blur-3xl transition-opacity duration-700",
+          "absolute inset-4 rounded-full bg-brand/10 blur-3xl transition-opacity duration-700",
           isPlaying ? "opacity-100" : "opacity-0",
         )}
         aria-hidden
       />
 
-      {/* Cover with floating animation */}
+      {/* Tilted stage */}
       <div
-        className={cn(
-          "relative overflow-hidden rounded-3xl shadow-2xl transition-all duration-500",
-          "h-72 w-72 md:h-80 md:w-80",
-          isPlaying && "animate-float shadow-glow",
-        )}
+        className="relative h-72 w-72 md:h-80 md:w-80"
+        style={{ transform: "rotateX(16deg) rotateZ(-8deg)", transformStyle: "preserve-3d" }}
       >
-        {src ? (
-          <Cover
-            src={src}
-            alt={alt}
-            variant="square"
-            className="h-full w-full"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand to-brand-strong">
-            <Headphones className="h-16 w-16 text-white/90" aria-hidden />
-          </div>
-        )}
+        {/* Platter shadow */}
+        <div
+          className="absolute inset-2 rounded-full bg-black/50 blur-xl transition-opacity duration-500"
+          style={{ transform: "translateZ(-40px)" }}
+          aria-hidden
+        />
 
-        {/* Playing indicator */}
-        {isPlaying && (
-          <div className="absolute bottom-4 right-4 flex items-end gap-1 rounded-xl bg-black/50 px-3 py-2 backdrop-blur-sm">
-            <span className="w-1 animate-eq1 rounded-full bg-white" style={{ height: "14px" }} />
-            <span className="w-1 animate-eq2 rounded-full bg-white" style={{ height: "14px" }} />
-            <span className="w-1 animate-eq3 rounded-full bg-white" style={{ height: "14px" }} />
+        {/* Spinning disc */}
+        <div
+          className={cn(
+            "relative h-full w-full rounded-full transition-[filter] duration-500",
+            isPlaying && "animate-spin-slow motion-reduce:animate-none",
+            !isPlaying && "brightness-[0.9] saturate-[0.9]",
+          )}
+          style={{ animationDuration: isPlaying ? "8s" : undefined, animationTimingFunction: "linear" }}
+          role="img"
+          aria-label={isPlaying ? `${alt} — sedang diputar` : alt}
+        >
+          {/* CD body */}
+          <div
+            className="absolute inset-0 rounded-full"
+            style={{
+              background:
+                "radial-gradient(circle at 32% 28%, #fdfdfe 0%, #d7dce3 16%, #b4bcc7 32%, #8b95a3 50%, #5c6575 68%, #353b47 84%, #242830 100%)",
+            }}
+            aria-hidden
+          />
+
+          {/* Groove rings */}
+          <div className="absolute inset-[5%] rounded-full border border-white/15" aria-hidden />
+          <div className="absolute inset-[9%] rounded-full border border-white/10" aria-hidden />
+          <div className="absolute inset-[13%] rounded-full border border-black/15" aria-hidden />
+
+          {/* Label (cover) */}
+          <div className="absolute inset-[19%] overflow-hidden rounded-full ring-4 ring-black/25">
+            {src ? (
+              <Cover
+                src={src}
+                alt={alt}
+                variant="square"
+                className="h-full w-full rounded-full"
+              />
+            ) : (
+              <div className="relative flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-strong">
+                <Headphones className="h-12 w-12 text-white/90" aria-hidden />
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Center spindle */}
+          <div className="absolute left-1/2 top-1/2 h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-950 ring-4 ring-black/40" aria-hidden />
+        </div>
+
+        {/* Static sheen (di luar disc agar tidak ikut berputar) */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-full" aria-hidden>
+          <div
+            className="absolute -left-1/3 -top-1/3 h-[130%] w-[70%] rotate-[24deg] opacity-30"
+            style={{
+              background: "linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.9) 50%, transparent 70%)",
+            }}
+          />
+        </div>
       </div>
     </div>
   );

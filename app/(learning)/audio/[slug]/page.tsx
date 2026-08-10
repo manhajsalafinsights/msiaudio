@@ -14,6 +14,7 @@ import {
 import { NotFoundError } from "@/lib/errors/app-error";
 import { getPlayerContext } from "@/features/player/services/player-service";
 import { listRelatedAudio, listAudioBySameSpeaker } from "@/repositories/audio-repository";
+import { getTranscriptByAudio } from "@/repositories/transcript-repository";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/typography";
@@ -216,11 +217,12 @@ export default async function AudioDetailPage({ params }: { params: Promise<{ sl
     .sort((a, b) => a.number - b.number);
 
   const speakerIds = audio.series.speakers.map((s) => s.speaker.id);
-  const [seriesRelated, speakerRelated] = await Promise.all([
+  const [seriesRelated, speakerRelated, transcript] = await Promise.all([
     listRelatedAudio(audio.series.id, audio.id, 4),
     speakerIds.length > 0
       ? listAudioBySameSpeaker(speakerIds, audio.series.id, 4)
       : Promise.resolve([]),
+    getTranscriptByAudio(audio.id),
   ]);
   const relatedAudios = [
     ...seriesRelated,
@@ -263,7 +265,15 @@ export default async function AudioDetailPage({ params }: { params: Promise<{ sl
             source={resolvedSource ?? undefined}
           >
             <OfflineBanner />
-            <PlayerFull audio={audio} sessions={sessions} />
+            <PlayerFull
+              audio={audio}
+              sessions={sessions}
+              transcript={
+                transcript?.segments?.length
+                  ? { segments: transcript.segments, language: transcript.language }
+                  : null
+              }
+            />
           </PlayerProvider>
         </PlayerErrorBoundary>
 

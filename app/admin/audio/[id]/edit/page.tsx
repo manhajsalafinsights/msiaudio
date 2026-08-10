@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Captions } from "lucide-react";
 import { getAudioAdmin } from "@/repositories/audio-repository";
 import { listAllSeries } from "@/repositories/series-repository";
 import { PageHeader } from "@/components/admin/page-header";
+import { Button } from "@/components/ui/button";
 import { AudioForm } from "@/features/admin/audio/components/audio-form";
 
 export const metadata = { title: "Edit Audio (Admin)" };
@@ -38,6 +39,12 @@ export default async function AdminAudioEditPage({
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <PageHeader title={`Edit: ${audio.judul}`} description="Perbarui data audio" />
+        <Button asChild variant="outline">
+          <Link href={`/admin/audio/${id}/transcript`}>
+            <Captions className="h-4 w-4" aria-hidden />
+            Transkrip
+          </Link>
+        </Button>
       </div>
 
       <AudioForm

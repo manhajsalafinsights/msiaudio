@@ -201,6 +201,10 @@
   to { transform: rotate(360deg); }
 }
 
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
 .animate-fade-in { animation: fade-in 0.3s ease-out; }
 .animate-slide-up { animation: slide-up 0.3s ease-out; }
 .animate-slide-down { animation: slide-down 0.3s ease-out; }
