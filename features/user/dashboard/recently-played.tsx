@@ -52,7 +52,7 @@ export function RecentlyPlayed({ items }: RecentlyPlayedProps) {
             <li key={item.id}>
               <Link
                 href={`/audio/${item.audio.slug}`}
-                className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-all hover:border-brand/30 hover:shadow-sm"
+                className="group flex items-center gap-3 overflow-hidden rounded-xl border border-border bg-surface p-3 transition-all hover:border-brand/30 hover:shadow-sm"
               >
                 <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-brand/10">
                   {item.audio.cover ? (

@@ -24,12 +24,13 @@ export function WeeklyActivity({ days }: { days: WeeklyActivityEntry[] }) {
           />
         ) : (
           <div
-            className="flex items-end justify-between gap-1.5 sm:gap-2"
-            role="img"
+            className="overflow-x-auto"
+            role="region"
             aria-label={`Grafik aktivitas mendengarkan 7 hari terakhir, total ${total} sesi`}
           >
+            <div className="flex items-end gap-1.5 sm:gap-2">
             {days.map((day) => (
-              <div key={day.date} className="flex flex-1 flex-col items-center gap-1.5">
+              <div key={day.date} className="flex min-w-9 flex-1 flex-col items-center gap-1.5">
                 <span className="text-[10px] font-medium text-muted">{day.count}</span>
                 <div className="flex h-20 w-full items-end overflow-hidden rounded-md bg-border/40">
                   <div
@@ -42,6 +43,7 @@ export function WeeklyActivity({ days }: { days: WeeklyActivityEntry[] }) {
                 </span>
               </div>
             ))}
+            </div>
           </div>
         )}
       </div>

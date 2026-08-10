@@ -39,7 +39,7 @@ export function LatestNotes({ items }: LatestNotesProps) {
       ) : (
         <ul className="flex flex-col gap-2">
           {items.map((item) => (
-            <li key={item.id} className="rounded-xl border border-border bg-surface p-3">
+            <li key={item.id} className="overflow-hidden rounded-xl border border-border bg-surface p-3">
               <div className="flex items-center gap-2">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand">
                   <StickyNote className="h-3.5 w-3.5" />
