@@ -17,6 +17,8 @@ import { AudioCard } from "@/components/shared/audio-card";
 import { KitabCard } from "@/components/shared/kitab-card";
 import { SectionHeader } from "@/components/shared/section-header";
 import { ContinueLearning } from "@/features/progress/continue-learning";
+import HeroSection from "@/features/home/components/hero-section";
+import HomeStats from "@/features/home/components/home-stats";
 
 export const revalidate = 60;
 
@@ -36,7 +38,7 @@ function LatestAudioSection() {
         fallback={
           <div className="flex gap-1 overflow-hidden">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="w-56 flex-none sm:w-64 lg:w-72">
+              <div key={i} className="w-[45%] flex-none sm:w-56 lg:w-72">
                 <div className="skeleton aspect-square w-full rounded-xl" />
                 <div className="skeleton mt-2.5 h-4 w-full rounded" />
                 <div className="skeleton mt-1.5 h-3 w-2/3 rounded" />
@@ -258,7 +260,7 @@ function DiscoverSection() {
 export default function HomePage() {
   return (
     <>
-      {/* HeroSection disembunyikan sementara */}
+      <HeroSection stats={<HomeStats />} />
       <Container className="py-5">
         <Suspense>
           <ContinueLearning />

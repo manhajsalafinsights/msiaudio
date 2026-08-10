@@ -12,22 +12,22 @@ type AudioCardProps = {
 
 export function AudioCard({ audio, className }: AudioCardProps) {
   return (
-    <li className={cn("w-56 flex-none snap-start sm:w-64 lg:w-72", className)}>
+    <li className={cn("w-[45%] flex-none snap-start sm:w-56 lg:w-72", className)}>
       <Link
         href={`/audio/${audio.slug}`}
-        className="group flex h-full flex-col gap-2 rounded-[0.1px] p-1.5 transition-colors duration-200 hover:bg-black/[0.05] dark:hover:bg-white/[0.06]"
+        className="group flex h-full flex-col gap-2 p-1.5 transition-colors duration-200 hover:bg-black/[0.05] dark:hover:bg-white/[0.06]"
       >
-        <span className="relative block aspect-square w-full overflow-hidden rounded-[0.1px]">
+        <span className="relative block aspect-square w-full overflow-hidden">
           <Cover
             src={audio.cover ?? audio.series?.cover}
             alt={audio.judul}
             variant="square"
-            className="h-full w-full"
+            className="h-full w-full rounded-none"
           />
 
           {/* Tombol play: selalu terlihat di mobile, muncul saat hover di desktop */}
           <span
-            className="absolute inset-0 flex items-center justify-center rounded-[0.1px]
+            className="absolute inset-0 flex items-center justify-center
               md:bg-black/0 md:opacity-0 md:transition-all md:duration-200
               md:group-hover:bg-black/25 md:group-hover:opacity-100"
             aria-hidden
