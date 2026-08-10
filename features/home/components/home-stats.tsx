@@ -32,11 +32,14 @@ async function HomeStatsContent() {
   return (
     <div className="inline-flex flex-wrap items-center justify-center rounded-full border border-brand/20 bg-surface/70 px-5 py-2 backdrop-blur">
       {items.map((item, i) => (
-        <span key={item.label} className="inline-flex items-center gap-x-1.5">
+        <span
+          key={item.label}
+          aria-label={item.label}
+          className="inline-flex items-center gap-x-1.5"
+        >
           {i > 0 && <span className="mx-2.5 h-1 w-1 rounded-full bg-brand/30" aria-hidden />}
           <item.icon className="h-4 w-4 text-brand" aria-hidden />
           <span className="text-sm font-bold text-foreground">{formatCount(item.value)}</span>
-          <span className="text-xs text-muted">{item.label}</span>
         </span>
       ))}
     </div>
