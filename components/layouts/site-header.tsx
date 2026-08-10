@@ -59,7 +59,7 @@ export function SiteHeader({ speakers }: SiteHeaderProps) {
         </nav>
 
         <div className="flex items-center gap-1 sm:gap-2">
-          <HeaderSearch />
+          {pathname !== "/" && <HeaderSearch />}
           <ThemeToggle />
           {isPending ? null : session ? (
             <>

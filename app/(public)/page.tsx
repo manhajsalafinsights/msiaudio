@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { ArrowRight } from "lucide-react";
 import { canonicalUrl } from "@/lib/seo";
 import { getRecentAudio } from "@/services/audio-service";
 import { getSeriesList } from "@/services/series-service";
@@ -214,46 +213,6 @@ async function CategoriesGrid() {
 }
 
 /* ================================================================
-   Temukan Kajian — CTA pencarian (pelengkap search utama di atas)
-   ================================================================ */
-
-function DiscoverSection() {
-  return (
-    <Container className="py-8">
-      <div className="card card-outlined relative overflow-hidden p-6 text-center sm:p-8">
-        <div
-          className="absolute inset-0 bg-gradient-to-br from-brand/10 via-transparent to-brand/5"
-          aria-hidden
-        />
-        <div className="relative flex flex-col items-center gap-3">
-          <h2 className="text-xl font-bold tracking-tight sm:text-2xl">Temukan Kajian</h2>
-          <p className="max-w-md text-sm text-muted">
-            Cari berdasarkan judul, kitab, pemateri, atau tema.
-          </p>
-          <form
-            action="/search"
-            role="search"
-            aria-label="Cari kajian"
-            className="flex w-full max-w-md flex-col gap-2 sm:flex-row"
-          >
-            <input
-              type="search"
-              name="q"
-              placeholder="Cari series, kitab, ustadz..."
-              className="input h-12"
-            />
-            <button type="submit" className="btn btn-primary btn-lg shrink-0">
-              Cari
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </button>
-          </form>
-        </div>
-      </div>
-    </Container>
-  );
-}
-
-/* ================================================================
    Home Page
    ================================================================ */
 
@@ -272,7 +231,6 @@ export default function HomePage() {
       <LatestSeriesSection />
       <TematikSection />
       <CategoriesSection />
-      <DiscoverSection />
     </>
   );
 }
