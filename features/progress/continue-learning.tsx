@@ -34,8 +34,11 @@ export function ContinueLearning() {
   }
 
   return (
-    <section className="flex flex-col gap-3" aria-label="Lanjutkan Belajar">
-      <h2 className="text-lg font-semibold">Lanjutkan Belajar</h2>
+    <section className="flex flex-col gap-4" aria-label="Lanjutkan Belajar">
+      <div>
+        <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">Lanjutkan Belajar</h2>
+        <p className="mt-1 text-sm text-muted">Lanjutkan kajian dari posisi terakhirmu.</p>
+      </div>
       <div className="flex flex-col gap-3">
         {items.map((item) => {
           const audio = item.lastAudio;
@@ -45,20 +48,20 @@ export function ContinueLearning() {
           return (
             <div
               key={item.id}
-              className="group flex items-center gap-3 rounded-2xl border border-brand/15 bg-surface p-3 transition-all hover:border-brand/30 hover:shadow-sm"
+              className="group flex items-center gap-3 rounded-2xl border border-brand/15 bg-surface p-4 transition-all hover:border-brand/30 hover:shadow-sm sm:gap-4"
             >
-              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-brand/10">
+              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-brand/10">
                 {item.series.cover ? (
                   <Image
                     src={item.series.cover}
                     alt={item.series.judul}
                     fill
-                    sizes="48px"
+                    sizes="64px"
                     className="object-cover"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-brand">
-                    <Play className="h-5 w-5" />
+                    <Play className="h-6 w-6" />
                   </div>
                 )}
               </div>
@@ -66,16 +69,16 @@ export function ContinueLearning() {
               <div className="min-w-0 flex-1">
                 <Link
                   href={`/series/${item.series.slug}`}
-                  className="block truncate text-sm font-semibold hover:text-brand"
+                  className="block truncate text-sm font-semibold hover:text-brand sm:text-base"
                 >
                   {item.series.judul}
                 </Link>
-                <p className="mt-0.5 truncate text-xs text-muted">
+                <p className="mt-0.5 truncate text-[13px] text-muted">
                   {audio.judul} · {formatDurationHuman(audio.durasi)}
                 </p>
 
-                <div className="mt-2 flex items-center gap-3">
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-border/60">
+                <div className="mt-2.5 flex items-center gap-3">
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-border/60">
                     <div
                       className="h-full rounded-full bg-brand transition-all"
                       style={{ width: `${percent}%` }}
@@ -88,9 +91,9 @@ export function ContinueLearning() {
               <Link
                 href={`/audio/${audio.slug}`}
                 aria-label={`Lanjutkan ${audio.judul}`}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand text-white transition-all hover:bg-brand-hover hover:shadow-md active:scale-95"
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-md shadow-brand/20 transition-all hover:bg-brand-hover hover:shadow-lg active:scale-95"
               >
-                <Play className="h-5 w-5 fill-current" />
+                <Play className="h-6 w-6 fill-current" />
               </Link>
             </div>
           );

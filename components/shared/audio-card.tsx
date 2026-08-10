@@ -11,11 +11,14 @@ type AudioCardProps = {
 };
 
 export function AudioCard({ audio, className }: AudioCardProps) {
+  const speakerName = audio.series?.speakers[0]?.speaker.nama;
+  const meta = speakerName ?? audio.series?.judul;
+
   return (
-    <li className={cn("w-[45%] flex-none snap-start sm:w-56 lg:w-72", className)}>
+    <li className={cn("w-[68%] flex-none snap-start sm:w-60 md:w-auto", className)}>
       <Link
         href={`/audio/${audio.slug}`}
-        className="group flex h-full flex-col gap-2 p-1.5 transition-colors duration-200 hover:bg-black/[0.05] dark:hover:bg-white/[0.06]"
+        className="group flex h-full flex-col gap-2 rounded-xl p-1.5 transition-colors duration-200 hover:bg-black/[0.05] dark:hover:bg-white/[0.06]"
       >
         <span className="relative block aspect-square w-full overflow-hidden">
           <Cover
@@ -40,18 +43,16 @@ export function AudioCard({ audio, className }: AudioCardProps) {
             </span>
           </span>
 
-          <span className="absolute bottom-1.5 right-1.5 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-white backdrop-blur-sm">
+          <span className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-1 text-xs font-medium tabular-nums text-white backdrop-blur-sm">
             {formatDuration(audio.durasi)}
           </span>
         </span>
 
-        <span className="flex flex-col gap-0.5 px-0.5">
+        <span className="flex flex-col gap-1 px-0.5">
           <span className="line-clamp-2 text-sm font-semibold leading-snug group-hover:text-brand">
             {audio.judul}
           </span>
-          {audio.series && (
-            <span className="truncate text-xs text-muted">{audio.series.judul}</span>
-          )}
+          {meta && <span className="truncate text-xs text-muted">{meta}</span>}
         </span>
       </Link>
     </li>

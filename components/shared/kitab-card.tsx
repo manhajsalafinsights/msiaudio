@@ -19,18 +19,18 @@ export function KitabCard({ kitab }: KitabCardProps) {
       href={`/kitab/${kitab.slug}`}
       kind="kitab"
       slug={kitab.slug}
-      className="card card-interactive group flex items-center gap-3 p-4"
+      className="group flex items-center gap-3 rounded-2xl bg-surface p-4 shadow-xs transition-all hover:shadow-md"
     >
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand">
-        <BookOpen className="h-5 w-5" aria-hidden />
+      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+        <BookOpen className="h-6 w-6" aria-hidden />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold group-hover:text-brand">
+        <span className="block truncate text-[15px] font-semibold group-hover:text-brand">
           {kitab.nama}
         </span>
-        <span className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[11px] text-muted">
+        <span className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-muted">
           <span className="inline-flex items-center gap-1">
-            <Eye className="h-3 w-3 text-brand/70" aria-hidden />
+            <Eye className="h-3.5 w-3.5 text-brand/70" aria-hidden />
             {formatCompactCount(kitab.viewCount)} dilihat
           </span>
           <span>{formatCount(kitab.seriesCount)} series</span>

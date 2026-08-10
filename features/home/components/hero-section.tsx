@@ -2,7 +2,13 @@
 
 import type { ReactNode } from "react";
 
-export default function HeroSection({ stats }: { stats?: ReactNode }) {
+export default function HeroSection({
+  search,
+  stats,
+}: {
+  search?: ReactNode;
+  stats?: ReactNode;
+}) {
   return (
     <section className="relative overflow-hidden">
       <div
@@ -10,12 +16,13 @@ export default function HeroSection({ stats }: { stats?: ReactNode }) {
         aria-hidden
       />
 
-      <div className="relative mx-auto max-w-5xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
-        <div className="flex flex-col items-center justify-center gap-2 text-center">
+      <div className="relative mx-auto max-w-6xl px-4 py-3 sm:px-6 sm:py-5 lg:px-8">
+        <div className="flex flex-col items-center justify-center gap-2.5 text-center">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-surface/70 px-3 py-1 text-xs font-medium text-brand backdrop-blur">
             <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-brand" />
             Platform Audio Kajian Islam
           </span>
+          {search}
           {stats}
         </div>
       </div>

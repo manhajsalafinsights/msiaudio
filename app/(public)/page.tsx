@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { Search, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { canonicalUrl } from "@/lib/seo";
 import { getRecentAudio } from "@/services/audio-service";
 import { getSeriesList } from "@/services/series-service";
@@ -12,6 +12,7 @@ import {
 } from "@/repositories/series-type-repository";
 import { Container } from "@/components/ui/container";
 import { EmptyState } from "@/components/ui/empty-state";
+import { SeriesCard } from "@/components/shared/series-card";
 import { SeriesCardCompact } from "@/components/shared/series-card-compact";
 import { AudioCard } from "@/components/shared/audio-card";
 import { KitabCard } from "@/components/shared/kitab-card";
@@ -19,6 +20,7 @@ import { SectionHeader } from "@/components/shared/section-header";
 import { ContinueLearning } from "@/features/progress/continue-learning";
 import HeroSection from "@/features/home/components/hero-section";
 import HomeStats from "@/features/home/components/home-stats";
+import { HomeSearch } from "@/features/home/components/home-search";
 
 export const revalidate = 60;
 
@@ -27,20 +29,21 @@ export const metadata: Metadata = {
 };
 
 /* ================================================================
-   Kajian Terbaru
+   Kajian Terbaru — fokus utama. Desktop grid 4 kolom,
+   mobile horizontal scroll dengan kartu yang nyaman.
    ================================================================ */
 
 function LatestAudioSection() {
   return (
-    <Container className="pt-2 pb-5">
+    <Container className="pt-1 pb-4 sm:pb-5">
       <SectionHeader title="Kajian Terbaru" moreHref="/explore" />
       <Suspense
         fallback={
-          <div className="flex gap-1 overflow-hidden">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="w-[45%] flex-none sm:w-56 lg:w-72">
+          <div className="-mx-4 flex gap-3 overflow-hidden px-4 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:px-0 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="w-[68%] flex-none sm:w-60 md:w-auto">
                 <div className="skeleton aspect-square w-full rounded-xl" />
-                <div className="skeleton mt-2.5 h-4 w-full rounded" />
+                <div className="skeleton mt-2 h-4 w-full rounded" />
                 <div className="skeleton mt-1.5 h-3 w-2/3 rounded" />
               </div>
             ))}
@@ -54,12 +57,12 @@ function LatestAudioSection() {
 }
 
 async function LatestAudioList() {
-  const audioList = await getRecentAudio(10);
+  const audioList = await getRecentAudio(8);
   if (audioList.length === 0) {
     return <EmptyState title="Belum ada kajian" description="Kajian akan muncul di sini." />;
   }
   return (
-    <ul className="flex gap-1 overflow-x-auto pb-2 -mx-4 px-4 snap-x sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+    <ul className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0 md:pb-0 lg:grid-cols-4">
       {audioList.map((audio) => (
         <AudioCard key={audio.id} audio={audio} />
       ))}
@@ -73,13 +76,13 @@ async function LatestAudioList() {
 
 function KitabSection() {
   return (
-    <Container className="py-5">
+    <Container className="py-4 sm:py-5">
       <SectionHeader title="Pilihan Kitab" moreHref="/kitab" />
       <Suspense
         fallback={
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="skeleton h-20 rounded-xl" />
+              <div key={i} className="skeleton h-20 rounded-2xl" />
             ))}
           </div>
         }
@@ -103,18 +106,55 @@ async function KitabGrid() {
 }
 
 /* ================================================================
+   Series Terbaru — katalog audio, cover sebagai elemen utama
+   ================================================================ */
+
+function LatestSeriesSection() {
+  return (
+    <Container className="py-4 sm:py-5">
+      <SectionHeader title="Series Terbaru" moreHref="/series" />
+      <Suspense
+        fallback={
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="skeleton aspect-[4/3] rounded-2xl" />
+            ))}
+          </div>
+        }
+      >
+        <LatestSeriesGrid />
+      </Suspense>
+    </Container>
+  );
+}
+
+async function LatestSeriesGrid() {
+  const result = await getSeriesList(1, 4, { sort: "terbaru" });
+  if (result.items.length === 0) {
+    return <EmptyState title="Belum ada series" description="Series akan muncul di sini." />;
+  }
+  return (
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {result.items.map((series) => (
+        <SeriesCard key={series.id} series={series} />
+      ))}
+    </div>
+  );
+}
+
+/* ================================================================
    Tematik
    ================================================================ */
 
 function TematikSection() {
   return (
-    <Container className="py-5">
+    <Container className="py-4 sm:py-5">
       <SectionHeader title="Tematik" moreHref="/kitab/tematik" />
       <Suspense
         fallback={
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="skeleton h-20 rounded-xl" />
+              <div key={i} className="skeleton h-16 rounded-2xl" />
             ))}
           </div>
         }
@@ -133,7 +173,7 @@ async function TematikGrid() {
     );
   }
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
       {tematik.series.map((series) => (
         <SeriesCardCompact key={series.id} series={series} />
       ))}
@@ -147,7 +187,7 @@ async function TematikGrid() {
 
 function CategoriesSection() {
   return (
-    <Container className="py-5">
+    <Container className="py-4 sm:py-5">
       <SectionHeader title="Kategori" moreHref="/explore" />
       <CategoriesGrid />
     </Container>
@@ -173,62 +213,21 @@ async function CategoriesGrid() {
 }
 
 /* ================================================================
-   Series Terbaru
-   ================================================================ */
-
-function LatestSeriesSection() {
-  return (
-    <Container className="py-5">
-      <SectionHeader title="Series Terbaru" moreHref="/series" />
-      <Suspense
-        fallback={
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="skeleton h-20 rounded-xl" />
-            ))}
-          </div>
-        }
-      >
-        <LatestSeriesGrid />
-      </Suspense>
-    </Container>
-  );
-}
-
-async function LatestSeriesGrid() {
-  const result = await getSeriesList(1, 4, { sort: "terbaru" });
-  if (result.items.length === 0) {
-    return <EmptyState title="Belum ada series" description="Series akan muncul di sini." />;
-  }
-  return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      {result.items.map((series) => (
-        <SeriesCardCompact key={series.id} series={series} />
-      ))}
-    </div>
-  );
-}
-
-/* ================================================================
-   Temukan Kajian — CTA pencarian
+   Temukan Kajian — CTA pencarian (pelengkap search utama di atas)
    ================================================================ */
 
 function DiscoverSection() {
   return (
-    <Container className="py-10">
-      <div className="card card-outlined relative overflow-hidden p-8 text-center md:p-12">
+    <Container className="py-8">
+      <div className="card card-outlined relative overflow-hidden p-6 text-center sm:p-8">
         <div
           className="absolute inset-0 bg-gradient-to-br from-brand/10 via-transparent to-brand/5"
           aria-hidden
         />
-        <div className="relative flex flex-col items-center gap-4">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10 text-brand">
-            <Search className="h-6 w-6" aria-hidden />
-          </span>
-          <h2 className="text-2xl font-bold tracking-tight md:text-3xl">Temukan Kajian</h2>
-          <p className="max-w-md text-sm text-muted md:text-base">
-            Cari berdasarkan judul, kitab, pemateri, atau tema. Semua kajian tersusun rapi untuk
-            memudahkan belajarmu.
+        <div className="relative flex flex-col items-center gap-3">
+          <h2 className="text-xl font-bold tracking-tight sm:text-2xl">Temukan Kajian</h2>
+          <p className="max-w-md text-sm text-muted">
+            Cari berdasarkan judul, kitab, pemateri, atau tema.
           </p>
           <form
             action="/search"
@@ -260,17 +259,17 @@ function DiscoverSection() {
 export default function HomePage() {
   return (
     <>
-      <HeroSection stats={<HomeStats />} />
+      <HeroSection search={<HomeSearch />} stats={<HomeStats />} />
       <LatestAudioSection />
-      <Container className="pt-2 pb-4">
+      <Container className="py-4 sm:py-5">
         <Suspense>
           <ContinueLearning />
         </Suspense>
       </Container>
       <KitabSection />
+      <LatestSeriesSection />
       <TematikSection />
       <CategoriesSection />
-      <LatestSeriesSection />
       <DiscoverSection />
     </>
   );
