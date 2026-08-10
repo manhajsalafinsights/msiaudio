@@ -12,7 +12,8 @@ import { cn } from "@/utils/cn";
 
 interface PlayerControlsProps {
   isPlaying: boolean;
-  canRewind: boolean;
+  hasPrevious: boolean;
+  hasNext: boolean;
   onPlay: () => void;
   onPause: () => void;
   onPrevious: () => void;
@@ -23,7 +24,8 @@ interface PlayerControlsProps {
 
 export function PlayerControls({
   isPlaying,
-  canRewind,
+  hasPrevious,
+  hasNext,
   onPlay,
   onPause,
   onPrevious,
@@ -36,7 +38,7 @@ export function PlayerControls({
       <ControlButton
         aria-label="Sesi sebelumnya"
         onClick={onPrevious}
-        disabled={!canRewind}
+        disabled={!hasPrevious}
       >
         <SkipBack className="h-5 w-5" />
       </ControlButton>
@@ -62,7 +64,7 @@ export function PlayerControls({
         <RotateCw className="h-5 w-5" />
       </ControlButton>
 
-      <ControlButton aria-label="Sesi berikutnya" onClick={onNext}>
+      <ControlButton aria-label="Sesi berikutnya" onClick={onNext} disabled={!hasNext}>
         <SkipForward className="h-5 w-5" />
       </ControlButton>
     </div>

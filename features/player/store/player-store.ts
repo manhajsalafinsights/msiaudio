@@ -117,8 +117,7 @@ export const usePlayerStore = create<PlayerStore>()((set, get) => ({
 
     previous: () => {
       const state = get();
-      const hasPrev = state.currentQueueIndex > 0;
-      if (hasPrev && state.position < 5) {
+      if (state.currentQueueIndex > 0) {
         const prevIndex = state.currentQueueIndex - 1;
         const prevAudio = state.queue[prevIndex]?.audio;
         if (prevAudio) {

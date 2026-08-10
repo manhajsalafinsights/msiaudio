@@ -53,7 +53,7 @@ export function PlayerFull({
   transcript,
 }: PlayerFullProps) {
   const { isPlayerReady, initialize, playerError } = usePlayerProvider();
-  const { audio: currentAudio, status, position, duration, config, error } = usePlayer();
+  const { audio: currentAudio, status, position, duration, config, error, queueLength, currentQueueIndex } = usePlayer();
   const actions = usePlayerActions();
   usePlayerKeyboard();
 
@@ -156,7 +156,8 @@ export function PlayerFull({
 
   const showError = playerError || error || (!resolvedSource ? "Tidak ada sumber audio yang tersedia" : null);
 
-  const canRewind = position > 5;
+  const hasPrevious = currentQueueIndex > 0;
+  const hasNext = currentQueueIndex < queueLength - 1;
 
   const speakerNames = displayAudio.series.speakers.map((s) => s.speaker.nama).join(", ");
 
@@ -320,7 +321,8 @@ export function PlayerFull({
             {/* Main Controls */}
             <PlayerControls
               isPlaying={isPlaying}
-              canRewind={canRewind}
+              hasPrevious={hasPrevious}
+              hasNext={hasNext}
               onPlay={handlePlayPause}
               onPause={actions.pause}
               onPrevious={actions.previous}

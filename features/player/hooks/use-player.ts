@@ -60,7 +60,7 @@ export function usePrevNext() {
       const nextAudio = state.queue[currentIndex + 1]?.audio ?? null;
 
       return {
-        hasPrev: hasPrev && state.position < 5 ? currentIndex > 0 : hasPrev,
+        hasPrev,
         hasNext,
         prevAudio,
         nextAudio,
