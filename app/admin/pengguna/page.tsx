@@ -1,20 +1,45 @@
-import { Users } from "lucide-react";
+import { listUsers } from "@/repositories/user-repository";
+import { getCurrentUser } from "@/lib/auth/session";
 import { PageHeader } from "@/components/admin/page-header";
+import { PenggunaTable } from "@/features/admin/pengguna/components/pengguna-table";
 
 export const metadata = { title: "Pengguna (Admin)" };
+export const revalidate = 0;
 
-export default function AdminPenggunaPage() {
+export default async function AdminPenggunaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; page?: string }>;
+}) {
+  const params = await searchParams;
+  const page = Math.max(1, Number(params.page) || 1);
+
+  const [admin, { items, total, totalPages }] = await Promise.all([
+    getCurrentUser(),
+    listUsers({ q: params.q, page, perPage: 10 }),
+  ]);
+
+  const rows = items.map((u) => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: u.role,
+    status: u.status,
+    lastLoginAt: u.lastLoginAt?.toISOString() ?? null,
+    createdAt: u.createdAt.toISOString(),
+  }));
+
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Pengguna" description="Kelola akun pengguna" />
+      <PageHeader title="Pengguna" description={`Kelola akun pengguna terdaftar (${total})`} />
 
-      <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-surface px-6 py-16 text-center">
-        <Users className="h-10 w-10 text-muted" />
-        <p className="font-medium">Halaman Pengguna</p>
-        <p className="max-w-md text-sm text-muted">
-          Kelola akun, peran, dan status pengguna. Fitur ini akan tersedia pada rilis berikutnya.
-        </p>
-      </div>
+      <PenggunaTable
+        rows={rows}
+        total={total}
+        totalPages={totalPages}
+        page={page}
+        isSuperAdmin={admin?.role === "SUPER_ADMIN"}
+      />
     </div>
   );
 }

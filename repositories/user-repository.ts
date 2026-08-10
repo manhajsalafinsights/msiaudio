@@ -16,10 +16,20 @@ export async function getUserByEmailWithAccounts(email: string) {
   });
 }
 
-export async function listUsers(opts: { page: number; perPage: number }) {
+export async function listUsers(opts: { q?: string; page: number; perPage: number }) {
+  const where: Prisma.UserWhereInput = opts.q?.trim()
+    ? {
+        OR: [
+          { name: { contains: opts.q.trim(), mode: "insensitive" } },
+          { email: { contains: opts.q.trim(), mode: "insensitive" } },
+        ],
+      }
+    : {};
+
   const [total, items] = await prisma.$transaction([
-    prisma.user.count(),
+    prisma.user.count({ where }),
     prisma.user.findMany({
+      where,
       select: {
         id: true,
         name: true,
@@ -34,7 +44,7 @@ export async function listUsers(opts: { page: number; perPage: number }) {
       take: opts.perPage,
     }),
   ]);
-  return { items, total };
+  return { items, total, totalPages: Math.max(1, Math.ceil(total / opts.perPage)) };
 }
 
 export async function updateUser(id: string, data: Partial<Prisma.UserUpdateInput>) {
