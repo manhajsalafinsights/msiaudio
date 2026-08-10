@@ -95,6 +95,20 @@ export async function listRecentPublishedAudio(limit: number) {
   });
 }
 
+/** Satu audio published terbaru dari series dengan series-type tertentu (untuk promosi konten). */
+export async function findLatestAudioBySeriesTypeSlug(
+  seriesTypeSlug: string,
+): Promise<AudioCard | null> {
+  return prisma.audio.findFirst({
+    where: {
+      published: true,
+      series: { published: true, seriesType: { slug: seriesTypeSlug } },
+    },
+    include: audioCardInclude,
+    orderBy: { createdAt: "desc" },
+  });
+}
+
 /** Semua slug audio published — untuk generateStaticParams. */
 export async function listPublishedAudioSlugs() {
   const rows = await prisma.audio.findMany({

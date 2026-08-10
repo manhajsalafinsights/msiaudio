@@ -5,6 +5,27 @@ export async function getRecentAudio(limit = 8) {
   return audioRepository.listRecentPublishedAudio(limit);
 }
 
+/**
+ * Promosi "Pilihan Untuk Belajar" — satu audio andalan per jenis konten.
+ * Kategori yang belum punya audio diabaikan (tanpa error).
+ */
+export async function getPromoLearningAudios() {
+  const entries = [
+    { slug: "kajian-kitab", label: "Kajian Kitab" },
+    { slug: "murotal", label: "Murotal" },
+    { slug: "kitab-bahasa-arab", label: "Belajar Bahasa Arab" },
+  ];
+
+  const items = await Promise.all(
+    entries.map(async (entry) => {
+      const audio = await audioRepository.findLatestAudioBySeriesTypeSlug(entry.slug);
+      return audio ? { label: entry.label, audio } : null;
+    }),
+  );
+
+  return items.filter((item): item is NonNullable<typeof item> => item !== null);
+}
+
 export async function getAudioBySlug(slug: string) {
   const audio = await audioRepository.findPublishedAudioBySlug(slug);
   if (!audio) throw new NotFoundError("Audio tidak ditemukan");

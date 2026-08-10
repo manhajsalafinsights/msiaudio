@@ -21,6 +21,7 @@ import { ContinueLearning } from "@/features/progress/continue-learning";
 import HeroSection from "@/features/home/components/hero-section";
 import HomeStats from "@/features/home/components/home-stats";
 import { HomeSearch } from "@/features/home/components/home-search";
+import { LearningPicksSection } from "@/features/home/components/learning-picks";
 
 export const revalidate = 60;
 
@@ -266,6 +267,7 @@ export default function HomePage() {
           <ContinueLearning />
         </Suspense>
       </Container>
+      <LearningPicksSection />
       <KitabSection />
       <LatestSeriesSection />
       <TematikSection />
