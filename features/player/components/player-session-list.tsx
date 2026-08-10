@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Play, Check } from "lucide-react";
+import { Play, Check, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { formatDurationHuman } from "@/utils/duration";
 
@@ -21,17 +22,50 @@ interface SessionListProps {
 }
 
 export function SessionList({ seriesTitle, sessions }: SessionListProps) {
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">{seriesTitle}</h3>
-        <span className="text-sm text-muted">{sessions.length} Sesi</span>
-      </div>
+  const [open, setOpen] = useState(true);
 
-      <div className="flex flex-col gap-2">
-        {sessions.map((session) => (
-          <SessionItem key={session.id} session={session} />
-        ))}
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-controls="player-session-list"
+        className="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 text-left transition-colors duration-150 hover:bg-border/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+      >
+        <span className="flex items-center gap-2">
+          <h3 className="text-lg font-semibold">{seriesTitle}</h3>
+          <span className="rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">
+            {sessions.length} Sesi
+          </span>
+        </span>
+        <span
+          className="flex items-center gap-1 text-sm text-muted transition-colors duration-150 hover:text-foreground"
+          aria-hidden
+        >
+          {open ? "Sembunyikan" : "Tampilkan"}
+          {open ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </span>
+      </button>
+
+      <div
+        id="player-session-list"
+        className={cn(
+          "grid transition-[grid-template-rows] duration-300 ease-out",
+          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+        )}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <div className="flex flex-col gap-2 pt-2">
+            {sessions.map((session) => (
+              <SessionItem key={session.id} session={session} />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
