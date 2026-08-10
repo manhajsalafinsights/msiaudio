@@ -77,6 +77,7 @@ export type SeriesTypePublic = {
   icon: string | null;
   description: string | null;
   seriesCount: number;
+  viewCount: number;
 };
 
 /** Kitab (SeriesType) yang punya ≥1 series published — untuk /kitab & Pilihan Kitab.
@@ -90,6 +91,7 @@ export async function listPublishedSeriesTypes(): Promise<SeriesTypePublic[]> {
       slug: true,
       icon: true,
       description: true,
+      viewCount: true,
       _count: { select: { series: { where: { published: true } } } },
     },
     orderBy: { nama: "asc" },
@@ -101,6 +103,7 @@ export async function listPublishedSeriesTypes(): Promise<SeriesTypePublic[]> {
     icon: row.icon,
     description: row.description,
     seriesCount: row._count.series,
+    viewCount: row.viewCount,
   }));
 }
 

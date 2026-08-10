@@ -261,12 +261,12 @@ export default function HomePage() {
   return (
     <>
       <HeroSection stats={<HomeStats />} />
+      <LatestAudioSection />
       <Container className="pt-2 pb-4">
         <Suspense>
           <ContinueLearning />
         </Suspense>
       </Container>
-      <LatestAudioSection />
       <KitabSection />
       <TematikSection />
       <CategoriesSection />

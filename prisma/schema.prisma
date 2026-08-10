@@ -249,6 +249,7 @@ model SeriesType {
   icon        String?
   description String?
   isKitab     Boolean  @default(true)
+  viewCount   Int      @default(0)
   createdAt   DateTime @default(now())
 
   series Series[]
@@ -271,6 +272,7 @@ model Series {
   seriesTypeId String
   totalSesi    Int      @default(0)
   totalDurasi  Int      @default(0)
+  viewCount    Int      @default(0)
   published    Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

@@ -18,6 +18,15 @@ export function formatCount(value: number): string {
   return numberFormatter.format(value);
 }
 
+const compactFormatter = new Intl.NumberFormat("id-ID", {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
+
+export function formatCompactCount(value: number): string {
+  return compactFormatter.format(value);
+}
+
 export function formatDateTime(date: Date | string | number): string {
   return new Intl.DateTimeFormat("id-ID", {
     day: "numeric",
