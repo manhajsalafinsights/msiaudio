@@ -129,8 +129,8 @@ function cleanLeadingNumber(title: string): string {
 
 /**
  * Impor video playlist ke dalam series.
- * - mode "new": buat SERIES BARU (judul = judul playlist). Khusus tipe
- *   Tematik, audio digabung ke series penampung "Tematik" yang sudah ada.
+ * - mode "new": buat SERIES BARU (judul = judul playlist) untuk semua tipe,
+ *   termasuk Tematik.
  * - mode "existing": tambahkan audio ke series yang dipilih (nomor sesi
  *   melanjutkan sesi terakhir series tersebut).
  * Duplikat video (sudah dipakai audio lain) dilewati dan dilaporkan —
@@ -168,8 +168,7 @@ export async function importPlaylistAsSeries(
     }
 
     // Target series: mode "existing" menambahkan ke series yang dipilih;
-    // mode "new" membuat series baru (kecuali tipe Tematik yang digabung ke
-    // series penampung "Tematik" yang sudah ada).
+    // mode "new" selalu membuat series baru (judul = judul playlist).
     let series: { id: string; judul: string; slug: string };
     let baseNomorSesi = 0;
 
@@ -202,42 +201,17 @@ export async function importPlaylistAsSeries(
         };
       }
 
-      if (seriesType.slug === "tematik") {
-        const existing = await prisma.series.findFirst({
-          where: { seriesTypeId: seriesType.id, slug: "tematik" },
-        });
-        if (existing) {
-          series = { id: existing.id, judul: existing.judul, slug: existing.slug };
-          const agg = await prisma.audio.aggregate({
-            where: { seriesId: existing.id },
-            _max: { nomorSesi: true },
-          });
-          baseNomorSesi = agg._max.nomorSesi ?? 0;
-        } else {
-          const created = await prisma.series.create({
-            data: {
-              judul: "Tematik",
-              slug: await uniqueSlug("tematik", (s) => seriesSlugExists(s)),
-              cover: items[0]?.thumbnail ?? null,
-              seriesTypeId: data.seriesTypeId!,
-              published: data.published,
-            },
-          });
-          series = { id: created.id, judul: created.judul, slug: created.slug };
-        }
-      } else {
-        const seriesTitle = result.playlistTitle || "Playlist";
-        const created = await prisma.series.create({
-          data: {
-            judul: seriesTitle,
-            slug: await uniqueSlug(slugify(seriesTitle), (s) => seriesSlugExists(s)),
-            cover: items[0]?.thumbnail ?? null,
-            seriesTypeId: data.seriesTypeId!,
-            published: data.published,
-          },
-        });
-        series = { id: created.id, judul: created.judul, slug: created.slug };
-      }
+      const seriesTitle = result.playlistTitle || "Playlist";
+      const created = await prisma.series.create({
+        data: {
+          judul: seriesTitle,
+          slug: await uniqueSlug(slugify(seriesTitle), (s) => seriesSlugExists(s)),
+          cover: items[0]?.thumbnail ?? null,
+          seriesTypeId: data.seriesTypeId!,
+          published: data.published,
+        },
+      });
+      series = { id: created.id, judul: created.judul, slug: created.slug };
     }
 
     const existingMedia = await prisma.mediaSource.findMany({

@@ -323,7 +323,7 @@ export function PlaylistImport({
               </div>
               <p className="text-xs text-muted">
                 {mode === "new"
-                  ? "Buat series baru dari playlist ini. Tipe Tematik otomatis digabung ke series penampung 'Tematik'."
+                  ? "Buat series baru dari playlist ini (judul series = judul playlist), untuk semua tipe termasuk Tematik."
                   : "Audio ditambahkan ke series pilihan; nomor sesi melanjutkan sesi terakhir series tersebut."}
               </p>
             </div>
