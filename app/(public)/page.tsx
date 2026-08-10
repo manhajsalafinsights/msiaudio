@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 
 function LatestAudioSection() {
   return (
-    <Container className="py-5">
+    <Container className="pt-2 pb-5">
       <SectionHeader title="Kajian Terbaru" moreHref="/explore" />
       <Suspense
         fallback={
@@ -261,7 +261,7 @@ export default function HomePage() {
   return (
     <>
       <HeroSection stats={<HomeStats />} />
-      <Container className="py-5">
+      <Container className="pt-2 pb-4">
         <Suspense>
           <ContinueLearning />
         </Suspense>

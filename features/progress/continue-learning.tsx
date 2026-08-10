@@ -34,7 +34,7 @@ export function ContinueLearning() {
   }
 
   return (
-    <section className="flex flex-col gap-4" aria-label="Lanjutkan Belajar">
+    <section className="flex flex-col gap-3" aria-label="Lanjutkan Belajar">
       <h2 className="text-lg font-semibold">Lanjutkan Belajar</h2>
       <div className="flex flex-col gap-3">
         {items.map((item) => {

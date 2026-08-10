@@ -10,8 +10,8 @@ export default function HeroSection({ stats }: { stats?: ReactNode }) {
         aria-hidden
       />
 
-      <div className="relative mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center justify-center gap-4 text-center">
+      <div className="relative mx-auto max-w-5xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+        <div className="flex flex-col items-center justify-center gap-2 text-center">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-surface/70 px-3 py-1 text-xs font-medium text-brand backdrop-blur">
             <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-brand" />
             Platform Audio Kajian Islam
