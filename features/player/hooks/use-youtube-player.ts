@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ResolvedSource } from "@/features/player/types/player";
+import { resolveBestSource } from "@/features/player/services/player-service";
 import { usePlayerStore } from "@/features/player/store/player-store";
 
 const isDevelopment = process.env.NODE_ENV === "development";
@@ -153,6 +154,8 @@ export function useYouTubePlayer(): UseYouTubePlayerReturn {
   const [error, setError] = useState<string | null>(null);
   const playerRef = useRef<YouTubePlayerInstance | null>(null);
   const initializingRef = useRef(false);
+  // Video yang sedang dimuat di player (untuk deteksi pergantian audio).
+  const loadedVideoIdRef = useRef<string | null>(null);
 
   const store = usePlayerStore();
 
@@ -266,7 +269,11 @@ export function useYouTubePlayer(): UseYouTubePlayerReturn {
                 if (state === YT_PLAYER_STATES.PLAYING) store.actions.setStatus("playing");
                 else if (state === YT_PLAYER_STATES.PAUSED) store.actions.setStatus("paused");
                 else if (state === YT_PLAYER_STATES.BUFFERING) store.actions.setStatus("buffering");
-                else if (state === YT_PLAYER_STATES.ENDED) store.actions.setStatus("ended");
+                else if (state === YT_PLAYER_STATES.ENDED) {
+                  store.actions.setStatus("ended");
+                  // Auto-lanjut ke sesi berikutnya bila masih ada.
+                  store.actions.next();
+                }
               },
               onError: (evt: unknown) => {
                 const code = (evt as { data: number }).data;
@@ -283,6 +290,7 @@ export function useYouTubePlayer(): UseYouTubePlayerReturn {
           log("Player instance created");
           setPlayer(ytPlayer as YouTubePlayerInstance);
           playerRef.current = ytPlayer as YouTubePlayerInstance;
+          loadedVideoIdRef.current = source.providerId ?? null;
         } catch (err) {
           logError("Create error:", err);
           clearTimeout(timeout);
@@ -367,6 +375,25 @@ export function useYouTubePlayer(): UseYouTubePlayerReturn {
       // ignore sync errors
     }
   }, [player, isPlayerReady, store.status, store.config]);
+
+  // Muat video baru saat audio berganti (next/previous/auto-next).
+  // Dilewati bila video masih sama (mis. inisialisasi awal halaman).
+  const currentAudio = store.currentAudio;
+  useEffect(() => {
+    if (!player || !isPlayerReady) return;
+    if (!currentAudio) return;
+    const source = resolveBestSource(currentAudio.mediaSources);
+    if (!source || source.provider !== "YOUTUBE" || !source.providerId) return;
+    if (loadedVideoIdRef.current === source.providerId) return;
+
+    try {
+      loadedVideoIdRef.current = source.providerId;
+      player.cueVideoById(source.providerId);
+      store.actions.setStatus("playing");
+    } catch {
+      store.actions.setError("Gagal memuat audio berikutnya");
+    }
+  }, [player, isPlayerReady, currentAudio, store.actions]);
 
   // Seek hanya saat posisi melompat (user drag / restore history), bukan dari poll.
   useEffect(() => {

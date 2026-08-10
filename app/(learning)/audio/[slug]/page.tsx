@@ -200,7 +200,7 @@ export default async function AudioDetailPage({ params }: { params: Promise<{ sl
     throw error;
   }
 
-  const { audio, resolvedSource, queue } = playerContext;
+  const { audio, resolvedSource, queue, currentQueueIndex } = playerContext;
 
   // Daftar sesi series; status listening (centang) diisi client-side via /api/listening
   // agar halaman bebas runtime API (headers) sehingga bisa di-cache via ISR.
@@ -268,6 +268,8 @@ export default async function AudioDetailPage({ params }: { params: Promise<{ sl
             <PlayerFull
               audio={audio}
               sessions={sessions}
+              queue={queue}
+              currentQueueIndex={currentQueueIndex}
               transcript={
                 transcript?.segments?.length
                   ? { segments: transcript.segments, language: transcript.language }

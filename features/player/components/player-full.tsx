@@ -5,7 +5,7 @@ import { usePlayer } from "@/features/player/hooks/use-player";
 import { usePlayerActions } from "@/features/player/hooks/use-player";
 import { usePlayerProvider } from "@/features/player/context/player-provider";
 import { resolveBestSource } from "@/features/player/services/player-service";
-import type { PlayerAudio } from "@/features/player/types/player";
+import type { PlayerAudio, PlayerQueueItem } from "@/features/player/types/player";
 import { usePlayerKeyboard } from "@/features/player/hooks/use-player-keyboard";
 import { PlayerCover } from "@/features/player/components/player-cover";
 import { ProgressBar } from "@/features/player/components/player-progress";
@@ -36,31 +36,41 @@ interface PlayerFullProps {
     isCompleted: boolean;
     isCurrent: boolean;
   }[];
+  /** Queue lengkap satu series (untuk tombol next/previous & auto-next). */
+  queue?: PlayerQueueItem[];
+  currentQueueIndex?: number;
   /** Jumlah sesi yang benar-benar selesai didengarkan. */
   completedSessions?: number;
   /** Transkrip ber-timestamp untuk tampilan karaoke. */
   transcript?: { segments: TranscriptSegment[]; language: string } | null;
 }
 
-export function PlayerFull({ audio, sessions, completedSessions, transcript }: PlayerFullProps) {
+export function PlayerFull({
+  audio,
+  sessions,
+  queue,
+  completedSessions,
+  transcript,
+}: PlayerFullProps) {
   const { isPlayerReady, initialize, playerError } = usePlayerProvider();
   const { audio: currentAudio, status, position, duration, config, error } = usePlayer();
   const actions = usePlayerActions();
   usePlayerKeyboard();
 
-  const isCurrent = currentAudio?.id === audio.id;
-  const hasLoaded = isCurrent && status !== "idle";
+  // Audio yang sedang diputar (store) — fallback ke audio halaman saat belum dimuat.
+  const displayAudio = currentAudio ?? audio;
+  const hasLoaded = currentAudio != null && status !== "idle";
   const isPlaying = status === "playing" || status === "buffering";
 
   useProgressReporter({
-    audioId: audio.id,
-    seriesId: audio.series.id,
+    audioId: displayAudio.id,
+    seriesId: displayAudio.series.id,
     duration,
     position,
     status,
   });
 
-  const resolvedSource = resolveBestSource(audio.mediaSources);
+  const resolvedSource = resolveBestSource(displayAudio.mediaSources);
   const videoId = resolvedSource?.providerId ?? null;
 
   const [activeTab, setActiveTab] = useState("info");
@@ -97,11 +107,19 @@ export function PlayerFull({ audio, sessions, completedSessions, transcript }: P
     };
   }, [sessions]);
 
+  // Muat audio halaman + queue series-nya sekali saat mount (tidak menimpa saat
+  // user berpindah sesi via next/previous).
+  const hasLoadedPageAudio = useRef(false);
   useEffect(() => {
-    if (!isCurrent && resolvedSource) {
-      actions.loadAudio(audio);
+    if (hasLoadedPageAudio.current) return;
+    if (!resolvedSource) return;
+    if (currentAudio && currentAudio.id === audio.id) {
+      hasLoadedPageAudio.current = true;
+      return;
     }
-  }, [isCurrent, audio, actions, resolvedSource]);
+    hasLoadedPageAudio.current = true;
+    actions.loadAudio(audio, queue);
+  }, [audio, actions, resolvedSource, queue, currentAudio]);
 
   const handleInit = async () => {
     if (!resolvedSource) {
@@ -110,7 +128,7 @@ export function PlayerFull({ audio, sessions, completedSessions, transcript }: P
     }
     await initialize("yt-player-full", resolvedSource);
 
-    const res = await fetch(`/api/progress?audioId=${audio.id}`);
+    const res = await fetch(`/api/progress?audioId=${displayAudio.id}`);
     if (res.ok) {
       const data = await res.json();
       const history = data.history;
@@ -140,7 +158,7 @@ export function PlayerFull({ audio, sessions, completedSessions, transcript }: P
 
   const canRewind = position > 5;
 
-  const speakerNames = audio.series.speakers.map((s) => s.speaker.nama).join(", ");
+  const speakerNames = displayAudio.series.speakers.map((s) => s.speaker.nama).join(", ");
 
   // Session list (slug nyata dari server; status listening di-merge client-side).
   const baseSessionItems = sessions?.length
@@ -160,6 +178,7 @@ export function PlayerFull({ audio, sessions, completedSessions, transcript }: P
   const sessionItems = baseSessionItems.map((s) => ({
     ...s,
     isCompleted: listeningStatus[s.id] ?? s.isCompleted,
+    isCurrent: currentAudio ? currentAudio.id === s.id : s.isCurrent,
   }));
 
   const completedCount =
@@ -172,18 +191,18 @@ export function PlayerFull({ audio, sessions, completedSessions, transcript }: P
       label: "Informasi",
       content: (
         <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
-          <InfoCard label="Durasi" value={formatDuration(audio.durasi)} />
-          <InfoCard label="Jenis Kajian" value={audio.series.seriesType.nama} />
+          <InfoCard label="Durasi" value={formatDuration(displayAudio.durasi)} />
+          <InfoCard label="Jenis Kajian" value={displayAudio.series.seriesType.nama} />
           <InfoCard label="Pemateri" value={speakerNames} />
-          <InfoCard label="Sesi" value={`${audio.nomorSesi} dari ${audio.series.totalSesi}`} />
+          <InfoCard label="Sesi" value={`${displayAudio.nomorSesi} dari ${displayAudio.series.totalSesi}`} />
         </div>
       ),
     },
     {
       id: "description",
       label: "Deskripsi",
-      content: audio.deskripsi ? (
-        <p className="leading-relaxed text-foreground/80">{audio.deskripsi}</p>
+      content: displayAudio.deskripsi ? (
+        <p className="leading-relaxed text-foreground/80">{displayAudio.deskripsi}</p>
       ) : (
         <p className="text-muted">Tidak ada deskripsi.</p>
       ),
@@ -206,7 +225,9 @@ export function PlayerFull({ audio, sessions, completedSessions, transcript }: P
       id: "transcript",
       label: "Transcript",
       content:
-        transcript && transcript.segments.length > 0 ? (
+        transcript &&
+        transcript.segments.length > 0 &&
+        (!currentAudio || currentAudio.id === audio.id) ? (
           <PlayerTranscript
             segments={transcript.segments}
             language={transcript.language}
@@ -220,7 +241,7 @@ export function PlayerFull({ audio, sessions, completedSessions, transcript }: P
   return (
     <section
       className="flex flex-col gap-8"
-      aria-label={`Pemutar audio: ${audio.judul}`}
+      aria-label={`Pemutar audio: ${displayAudio.judul}`}
       role="region"
     >
       {/* YouTube iframe container - always hidden, only for audio */}
@@ -251,8 +272,8 @@ export function PlayerFull({ audio, sessions, completedSessions, transcript }: P
           {/* Kiri: artwork */}
           <div className="flex items-center justify-center">
             <PlayerCover
-              src={audio.cover}
-              alt={audio.judul}
+              src={displayAudio.cover}
+              alt={displayAudio.judul}
               isPlaying={isPlaying && hasLoaded}
             />
           </div>
@@ -262,10 +283,10 @@ export function PlayerFull({ audio, sessions, completedSessions, transcript }: P
             {/* Header */}
             <div className="flex flex-col items-center text-center md:items-start md:text-left">
               <p className="text-xs font-semibold uppercase tracking-wider text-brand">
-                {audio.series.judul}
+                {displayAudio.series.judul}
               </p>
               <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-3xl">
-                {audio.judul}
+                {displayAudio.judul}
               </h1>
               {speakerNames && (
                 <p className="mt-1.5 text-sm font-medium text-foreground/70">
@@ -282,9 +303,9 @@ export function PlayerFull({ audio, sessions, completedSessions, transcript }: P
 
             {/* Progress Series */}
             <ProgressSeries
-              totalSessions={audio.series.totalSesi}
+              totalSessions={displayAudio.series.totalSesi}
               completedSessions={completedCount}
-              currentSession={audio.nomorSesi}
+              currentSession={displayAudio.nomorSesi}
             />
 
             <div className="h-px bg-border" aria-hidden />
@@ -311,10 +332,10 @@ export function PlayerFull({ audio, sessions, completedSessions, transcript }: P
             {/* Toolbar: bookmark/catatan/bagikan + speed + volume */}
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 border-t border-border pt-4 md:justify-between">
               <QuickActions
-                audioId={audio.id}
+                audioId={displayAudio.id}
                 onNote={() => setIsNoteEditorOpen(true)}
-                shareUrl={`/audio/${audio.slug}`}
-                shareTitle={audio.judul}
+                shareUrl={`/audio/${displayAudio.slug}`}
+                shareTitle={displayAudio.judul}
               />
               <div className="flex items-center gap-4">
                 <SpeedControl speed={config.speed} onSpeedChange={actions.setSpeed} />
@@ -345,7 +366,7 @@ export function PlayerFull({ audio, sessions, completedSessions, transcript }: P
       <NoteEditor
         open={isNoteEditorOpen}
         onClose={() => setIsNoteEditorOpen(false)}
-        audioId={audio.id}
+        audioId={displayAudio.id}
         currentPosition={position}
       />
     </section>
