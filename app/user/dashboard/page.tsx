@@ -41,12 +41,12 @@ export default async function DashboardPage() {
 
       <SeriesProgress inProgress={seriesProgress.inProgress} completed={seriesProgress.completed} />
 
-      <div className="grid gap-6 sm:gap-8 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-2">
         <RecentlyPlayed items={recentlyPlayed} />
         <WeeklyActivity days={weeklyActivity} />
       </div>
 
-      <div className="grid gap-6 sm:gap-8 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-2">
         <LatestBookmarks items={latestBookmarks} />
         <LatestNotes items={latestNotes} />
       </div>

@@ -19,7 +19,7 @@ function SeriesRow({ item, isCompleted }: { item: SeriesProgressItem; isComplete
     <li>
       <Link
         href={`/series/${item.series.slug}`}
-        className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-all hover:border-brand/30 hover:shadow-sm"
+        className="group flex items-center gap-3 overflow-hidden rounded-xl border border-border bg-surface p-3 transition-all hover:border-brand/30 hover:shadow-sm"
       >
         <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-brand/10">
           {item.series.cover ? (
@@ -84,7 +84,7 @@ export function SeriesProgress({ inProgress, completed }: SeriesProgressProps) {
         <h2 className="text-lg font-semibold">Kemajuan Series</h2>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <div className="flex flex-col gap-3">
           <h3 className="flex items-center gap-2 text-sm font-semibold text-muted">
             Series Saya
