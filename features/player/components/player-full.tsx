@@ -244,18 +244,22 @@ export function PlayerFull({ audio, sessions, completedSessions, transcript }: P
         </div>
       )}
 
-      {/* Player Card - cover, info, progress & controls dalam satu kartu */}
+      {/* Player Card - cover, info, progress & controls dalam satu kartu.
+          Desktop: layout horizontal (CD di kiri, kontrol di kanan); mobile tetap vertikal. */}
       <div className="card card-outlined mx-auto w-full max-w-3xl p-5 sm:p-8">
-        <div className="flex flex-col gap-6">
-          {/* Cover & Info */}
-          <div className="flex flex-col items-center gap-6">
+        <div className="flex flex-col gap-6 md:flex-row md:items-center md:gap-10">
+          {/* Kiri: CD cover */}
+          <div className="flex shrink-0 items-center justify-center md:w-[38%]">
             <PlayerCover
               src={audio.cover}
               alt={audio.judul}
               isPlaying={isPlaying && hasLoaded}
             />
+          </div>
 
-            <div className="flex flex-col items-center gap-2 text-center">
+          {/* Kanan: info & kontrol */}
+          <div className="flex min-w-0 flex-1 flex-col gap-6">
+            <div className="flex flex-col items-center gap-2 text-center md:items-start md:text-left">
               <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{audio.judul}</h1>
               <p className="text-muted">
                 {audio.series.judul}
@@ -273,53 +277,55 @@ export function PlayerFull({ audio, sessions, completedSessions, transcript }: P
                 {showError}
               </div>
             )}
-          </div>
 
-          {/* Progress Series */}
-          <ProgressSeries
-            totalSessions={audio.series.totalSesi}
-            completedSessions={completedCount}
-            currentSession={audio.nomorSesi}
-          />
-
-          <div className="h-px bg-border" aria-hidden />
-
-          {/* Progress Bar */}
-          <ProgressBar
-            position={position}
-            duration={duration}
-            onSeek={actions.seek}
-          />
-
-          {/* Main Controls */}
-          <PlayerControls
-            isPlaying={isPlaying}
-            canRewind={canRewind}
-            onPlay={handlePlayPause}
-            onPause={actions.pause}
-            onPrevious={actions.previous}
-            onNext={actions.next}
-            onRewind={() => actions.seek(Math.max(0, position - 10))}
-            onForward={() => actions.seek(Math.min(duration, position + 30))}
-          />
-
-          {/* Quick Actions */}
-          <QuickActions
-            audioId={audio.id}
-            onNote={() => setIsNoteEditorOpen(true)}
-            shareUrl={`/audio/${audio.slug}`}
-            shareTitle={audio.judul}
-          />
-
-          {/* Secondary Controls */}
-          <div className="flex flex-wrap items-center justify-center gap-4 border-t border-border pt-5 sm:justify-between">
-            <SpeedControl speed={config.speed} onSpeedChange={actions.setSpeed} />
-            <VolumeControl
-              volume={config.volume}
-              muted={config.muted}
-              onVolumeChange={actions.setVolume}
-              onToggleMute={actions.toggleMute}
+            {/* Progress Series */}
+            <ProgressSeries
+              totalSessions={audio.series.totalSesi}
+              completedSessions={completedCount}
+              currentSession={audio.nomorSesi}
             />
+
+            <div className="h-px bg-border" aria-hidden />
+
+            {/* Progress Bar */}
+            <ProgressBar
+              position={position}
+              duration={duration}
+              onSeek={actions.seek}
+            />
+
+            {/* Main Controls */}
+            <PlayerControls
+              isPlaying={isPlaying}
+              canRewind={canRewind}
+              onPlay={handlePlayPause}
+              onPause={actions.pause}
+              onPrevious={actions.previous}
+              onNext={actions.next}
+              onRewind={() => actions.seek(Math.max(0, position - 10))}
+              onForward={() => actions.seek(Math.min(duration, position + 30))}
+            />
+
+            {/* Quick Actions */}
+            <div className="flex w-full justify-center md:justify-start">
+              <QuickActions
+                audioId={audio.id}
+                onNote={() => setIsNoteEditorOpen(true)}
+                shareUrl={`/audio/${audio.slug}`}
+                shareTitle={audio.judul}
+              />
+            </div>
+
+            {/* Secondary Controls */}
+            <div className="flex flex-wrap items-center justify-center gap-4 border-t border-border pt-5 sm:justify-between">
+              <SpeedControl speed={config.speed} onSpeedChange={actions.setSpeed} />
+              <VolumeControl
+                volume={config.volume}
+                muted={config.muted}
+                onVolumeChange={actions.setVolume}
+                onToggleMute={actions.toggleMute}
+              />
+            </div>
           </div>
         </div>
       </div>

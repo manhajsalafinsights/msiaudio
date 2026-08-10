@@ -25,7 +25,7 @@ export function PlayerCover({ src, alt, isPlaying }: PlayerCoverProps) {
 
       {/* Tilted stage */}
       <div
-        className="relative h-72 w-72 md:h-80 md:w-80"
+        className="relative h-72 w-72 md:h-64 md:w-64"
         style={{ transform: "rotateX(16deg) rotateZ(-8deg)", transformStyle: "preserve-3d" }}
       >
         {/* Platter shadow */}
