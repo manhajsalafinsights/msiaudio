@@ -12,10 +12,10 @@ type AudioCardProps = {
 
 export function AudioCard({ audio, className }: AudioCardProps) {
   return (
-    <li className={cn("w-48 flex-none snap-start sm:w-60 lg:w-72", className)}>
+    <li className={cn("w-56 flex-none snap-start sm:w-64 lg:w-72", className)}>
       <Link
         href={`/audio/${audio.slug}`}
-        className="group flex h-full flex-col gap-2.5 rounded-[0.1px] p-2 transition-colors duration-200 hover:bg-black/[0.05] dark:hover:bg-white/[0.06]"
+        className="group flex h-full flex-col gap-2 rounded-[0.1px] p-1.5 transition-colors duration-200 hover:bg-black/[0.05] dark:hover:bg-white/[0.06]"
       >
         <span className="relative block aspect-square w-full overflow-hidden rounded-[0.1px]">
           <Cover

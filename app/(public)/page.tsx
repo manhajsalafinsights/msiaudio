@@ -17,8 +17,6 @@ import { AudioCard } from "@/components/shared/audio-card";
 import { KitabCard } from "@/components/shared/kitab-card";
 import { SectionHeader } from "@/components/shared/section-header";
 import { ContinueLearning } from "@/features/progress/continue-learning";
-import HeroSection from "@/features/home/components/hero-section";
-import HomeStats from "@/features/home/components/home-stats";
 
 export const revalidate = 60;
 
@@ -36,9 +34,9 @@ function LatestAudioSection() {
       <SectionHeader title="Kajian Terbaru" moreHref="/explore" />
       <Suspense
         fallback={
-          <div className="flex gap-2 overflow-hidden">
+          <div className="flex gap-1 overflow-hidden">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="w-48 flex-none sm:w-60 lg:w-72">
+              <div key={i} className="w-56 flex-none sm:w-64 lg:w-72">
                 <div className="skeleton aspect-square w-full rounded-xl" />
                 <div className="skeleton mt-2.5 h-4 w-full rounded" />
                 <div className="skeleton mt-1.5 h-3 w-2/3 rounded" />
@@ -59,7 +57,7 @@ async function LatestAudioList() {
     return <EmptyState title="Belum ada kajian" description="Kajian akan muncul di sini." />;
   }
   return (
-    <ul className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 snap-x sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+    <ul className="flex gap-1 overflow-x-auto pb-2 -mx-4 px-4 snap-x sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
       {audioList.map((audio) => (
         <AudioCard key={audio.id} audio={audio} />
       ))}
@@ -260,7 +258,7 @@ function DiscoverSection() {
 export default function HomePage() {
   return (
     <>
-      <HeroSection stats={<HomeStats />} />
+      {/* HeroSection disembunyikan sementara */}
       <Container className="py-5">
         <Suspense>
           <ContinueLearning />
