@@ -26,6 +26,7 @@ export async function fetchTranscriptFromYouTube(
     const audio = await prisma.audio.findUnique({
       where: { id: audioId },
       select: {
+        slug: true,
         mediaSources: {
           where: { provider: "YOUTUBE" },
           take: 1,
@@ -72,7 +73,7 @@ export async function fetchTranscriptFromYouTube(
       },
     });
 
-    revalidatePath(`/audio/${audioId}`);
+    revalidatePath(`/audio/${audio.slug}`);
     revalidatePath("/", "layout");
 
     return {
@@ -100,8 +101,12 @@ export async function clearTranscript(
 ): Promise<ActionState<{ deleted: number }>> {
   try {
     await requireAdmin();
+    const audio = await prisma.audio.findUnique({
+      where: { id: audioId },
+      select: { slug: true },
+    });
     const deleted = await prisma.transcript.deleteMany({ where: { audioId } });
-    revalidatePath(`/audio/${audioId}`);
+    if (audio) revalidatePath(`/audio/${audio.slug}`);
     revalidatePath("/", "layout");
     return { ok: true, data: { deleted: deleted.count } };
   } catch (error) {
