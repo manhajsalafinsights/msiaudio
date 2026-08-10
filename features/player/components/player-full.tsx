@@ -244,12 +244,12 @@ export function PlayerFull({ audio, sessions, completedSessions, transcript }: P
         </div>
       )}
 
-      {/* Player Card - cover, info, progress & controls dalam satu kartu.
-          Desktop: layout horizontal (CD di kiri, kontrol di kanan); mobile tetap vertikal. */}
+      {/* Player Card - desktop: 2 kolom horizontal (artwork kiri, kontrol kanan);
+          mobile: tetap vertikal. */}
       <div className="card card-outlined mx-auto w-full max-w-3xl p-5 sm:p-8">
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:gap-10">
-          {/* Kiri: CD cover */}
-          <div className="flex shrink-0 items-center justify-center md:w-[38%]">
+        <div className="flex flex-col gap-6 md:grid md:grid-cols-[minmax(0,20rem)_1fr] md:items-center md:gap-10">
+          {/* Kiri: artwork */}
+          <div className="flex items-center justify-center">
             <PlayerCover
               src={audio.cover}
               alt={audio.judul}
@@ -257,18 +257,20 @@ export function PlayerFull({ audio, sessions, completedSessions, transcript }: P
             />
           </div>
 
-          {/* Kanan: info & kontrol */}
-          <div className="flex min-w-0 flex-1 flex-col gap-6">
-            <div className="flex flex-col items-center gap-2 text-center md:items-start md:text-left">
-              <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{audio.judul}</h1>
-              <p className="text-muted">
+          {/* Kanan: info, progress & kontrol */}
+          <div className="flex min-w-0 flex-col gap-4 sm:gap-5">
+            {/* Header */}
+            <div className="flex flex-col items-center text-center md:items-start md:text-left">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brand">
                 {audio.series.judul}
-                <span className="hidden">
-                  {" "}· Sesi {audio.nomorSesi} dari {audio.series.totalSesi}
-                </span>
               </p>
+              <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-3xl">
+                {audio.judul}
+              </h1>
               {speakerNames && (
-                <p className="font-medium text-brand">{speakerNames}</p>
+                <p className="mt-1.5 text-sm font-medium text-foreground/70">
+                  {speakerNames}
+                </p>
               )}
             </div>
 
@@ -287,7 +289,7 @@ export function PlayerFull({ audio, sessions, completedSessions, transcript }: P
 
             <div className="h-px bg-border" aria-hidden />
 
-            {/* Progress Bar */}
+            {/* Progress bar + waktu */}
             <ProgressBar
               position={position}
               duration={duration}
@@ -306,25 +308,23 @@ export function PlayerFull({ audio, sessions, completedSessions, transcript }: P
               onForward={() => actions.seek(Math.min(duration, position + 30))}
             />
 
-            {/* Quick Actions */}
-            <div className="flex w-full justify-center md:justify-start">
+            {/* Toolbar: bookmark/catatan/bagikan + speed + volume */}
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 border-t border-border pt-4 md:justify-between">
               <QuickActions
                 audioId={audio.id}
                 onNote={() => setIsNoteEditorOpen(true)}
                 shareUrl={`/audio/${audio.slug}`}
                 shareTitle={audio.judul}
               />
-            </div>
-
-            {/* Secondary Controls */}
-            <div className="flex flex-wrap items-center justify-center gap-4 border-t border-border pt-5 sm:justify-between">
-              <SpeedControl speed={config.speed} onSpeedChange={actions.setSpeed} />
-              <VolumeControl
-                volume={config.volume}
-                muted={config.muted}
-                onVolumeChange={actions.setVolume}
-                onToggleMute={actions.toggleMute}
-              />
+              <div className="flex items-center gap-4">
+                <SpeedControl speed={config.speed} onSpeedChange={actions.setSpeed} />
+                <VolumeControl
+                  volume={config.volume}
+                  muted={config.muted}
+                  onVolumeChange={actions.setVolume}
+                  onToggleMute={actions.toggleMute}
+                />
+              </div>
             </div>
           </div>
         </div>
