@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { Headset, BookOpen, User, Users } from "lucide-react";
 import { countPublishedAudio } from "@/repositories/audio-repository";
 import { countPublishedSeries } from "@/repositories/series-repository";
 import { countActiveSpeakers } from "@/repositories/speaker-repository";
@@ -22,10 +23,10 @@ async function HomeStatsContent() {
   ]);
 
   const items = [
-    { value: audioCount, label: "Kajian" },
-    { value: seriesCount, label: "Series" },
-    { value: speakerCount, label: "Pemateri" },
-    { value: userCount, label: "Pengguna" },
+    { value: audioCount, label: "Kajian", icon: Headset },
+    { value: seriesCount, label: "Series", icon: BookOpen },
+    { value: speakerCount, label: "Pemateri", icon: User },
+    { value: userCount, label: "Pengguna", icon: Users },
   ];
 
   return (
@@ -33,6 +34,7 @@ async function HomeStatsContent() {
       {items.map((item, i) => (
         <span key={item.label} className="inline-flex items-center gap-x-1.5">
           {i > 0 && <span className="mx-2.5 h-1 w-1 rounded-full bg-brand/30" aria-hidden />}
+          <item.icon className="h-4 w-4 text-brand" aria-hidden />
           <span className="text-sm font-bold text-foreground">{formatCount(item.value)}</span>
           <span className="text-xs text-muted">{item.label}</span>
         </span>
