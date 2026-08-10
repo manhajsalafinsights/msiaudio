@@ -13,8 +13,7 @@ import {
 import { Container } from "@/components/ui/container";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SeriesCardCompact } from "@/components/shared/series-card-compact";
-import { AudioRow } from "@/components/shared/audio-row";
-import { AudioRowSkeleton } from "@/components/shared/audio-row-skeleton";
+import { AudioCard } from "@/components/shared/audio-card";
 import { KitabCard } from "@/components/shared/kitab-card";
 import { SectionHeader } from "@/components/shared/section-header";
 import { ContinueLearning } from "@/features/progress/continue-learning";
@@ -37,11 +36,15 @@ function LatestAudioSection() {
       <SectionHeader title="Kajian Terbaru" moreHref="/explore" />
       <Suspense
         fallback={
-          <ul className="flex flex-col gap-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <AudioRowSkeleton key={i} />
+          <div className="flex gap-3 overflow-hidden">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="w-44 flex-none sm:w-52 lg:w-60">
+                <div className="skeleton aspect-square w-full rounded-xl" />
+                <div className="skeleton mt-2.5 h-4 w-full rounded" />
+                <div className="skeleton mt-1.5 h-3 w-2/3 rounded" />
+              </div>
             ))}
-          </ul>
+          </div>
         }
       >
         <LatestAudioList />
@@ -51,14 +54,14 @@ function LatestAudioSection() {
 }
 
 async function LatestAudioList() {
-  const audioList = await getRecentAudio(4);
+  const audioList = await getRecentAudio(10);
   if (audioList.length === 0) {
     return <EmptyState title="Belum ada kajian" description="Kajian akan muncul di sini." />;
   }
   return (
-    <ul className="flex flex-col gap-2">
+    <ul className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
       {audioList.map((audio) => (
-        <AudioRow key={audio.id} audio={audio} />
+        <AudioCard key={audio.id} audio={audio} />
       ))}
     </ul>
   );
