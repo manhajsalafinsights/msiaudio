@@ -1,8 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Menu, X } from "lucide-react";
+import Link from "next/link";
+import { Menu, X, Headphones } from "lucide-react";
 import { Container } from "@/components/ui/container";
+import { site } from "@/lib/config/site";
 
 type AppShellProps = {
   /** Sidebar konten profil (nav) — disembunyikan di layar kecil. */
@@ -18,17 +20,28 @@ export function AppShell({ sidebar, children }: AppShellProps) {
     <div className="flex flex-1 flex-col">
       {sidebar && (
         <>
-          <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur sm:px-6 lg:hidden">
-            <button
-              type="button"
-              aria-label="Buka menu akun"
-              aria-expanded={open}
-              onClick={() => setOpen(true)}
-              className="rounded-md p-2 text-muted transition-colors hover:bg-border/60 hover:text-foreground"
+          <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-border bg-background/80 px-4 backdrop-blur sm:px-6 lg:hidden">
+            <Link
+              href="/"
+              className="flex shrink-0 items-center gap-2"
+              aria-label={`${site.name} — kembali ke beranda`}
             >
-              <Menu className="h-5 w-5" aria-hidden />
-            </button>
-            <span className="text-sm font-medium text-muted">Menu Akun</span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-md bg-brand text-white">
+                <Headphones className="h-4 w-4" aria-hidden />
+              </span>
+            </Link>
+            <div className="flex items-center gap-1">
+              <span className="text-sm font-medium text-muted">Menu Akun</span>
+              <button
+                type="button"
+                aria-label="Buka menu akun"
+                aria-expanded={open}
+                onClick={() => setOpen(true)}
+                className="rounded-md p-2 text-muted transition-colors hover:bg-border/60 hover:text-foreground"
+              >
+                <Menu className="h-5 w-5" aria-hidden />
+              </button>
+            </div>
           </header>
 
           {open && (

@@ -10,6 +10,7 @@ import {
   Heart,
   User,
   Settings,
+  Home,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 
@@ -28,6 +29,14 @@ export function ProfileSidebar() {
 
   return (
     <nav className="flex flex-col gap-1" aria-label="Navigasi akun">
+      <Link
+        href="/"
+        className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-border/40 hover:text-foreground"
+      >
+        <Home className="h-4 w-4" />
+        Kembali ke Beranda
+      </Link>
+      <div className="my-1 border-t border-border" />
       {NAV_ITEMS.map((item) => {
         const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
         return (
