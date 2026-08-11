@@ -12,7 +12,6 @@ import {
 import { Container } from "@/components/ui/container";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SeriesCard } from "@/components/shared/series-card";
-import { SeriesCardCompact } from "@/components/shared/series-card-compact";
 import { AudioCard } from "@/components/shared/audio-card";
 import { KitabCard } from "@/components/shared/kitab-card";
 import { SectionHeader } from "@/components/shared/section-header";
@@ -155,9 +154,9 @@ function TematikSection() {
       <SectionHeader title="Tematik" moreHref="/kitab/tematik" />
       <Suspense
         fallback={
-          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="skeleton h-16 rounded-2xl" />
+              <div key={i} className="skeleton aspect-[4/3] rounded-2xl" />
             ))}
           </div>
         }
@@ -176,9 +175,9 @@ async function TematikGrid() {
     );
   }
   return (
-    <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-      {tematik.series.map((series) => (
-        <SeriesCardCompact key={series.id} series={series} />
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {tematik.series.slice(0, 4).map((series) => (
+        <SeriesCard key={series.id} series={series} />
       ))}
     </div>
   );
