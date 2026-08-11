@@ -329,7 +329,7 @@ export default async function ExplorePage({
           action="/search"
           role="search"
           aria-label="Cari kajian"
-          className="flex w-full max-w-xl flex-col gap-2 sm:flex-row"
+          className="flex w-full max-w-xl items-center gap-2"
         >
           <input
             type="search"

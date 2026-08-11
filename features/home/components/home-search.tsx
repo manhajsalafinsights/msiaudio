@@ -17,7 +17,7 @@ export function HomeSearch() {
         const q = String(form.get("q") ?? "").trim();
         router.push(q ? `/search?q=${encodeURIComponent(q)}` : "/search");
       }}
-      className="flex w-full max-w-xl flex-col gap-2 sm:flex-row"
+      className="flex w-full max-w-xl items-center gap-2"
     >
       <label className="relative flex-1">
         <Search
@@ -29,7 +29,8 @@ export function HomeSearch() {
           name="q"
           placeholder="Cari series, kitab, ustadz..."
           autoComplete="off"
-          className="input h-12 pl-11"
+          className="input h-12"
+          style={{ paddingLeft: "2.75rem" }}
         />
       </label>
       <button type="submit" className="btn btn-primary btn-lg shrink-0">
