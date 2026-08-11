@@ -25,7 +25,7 @@ export function SessionRow({ audio, nomor, completed = false, progressPercent = 
       >
         <span
           className={cn(
-            "relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-all",
+            "relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg transition-all",
             completed
               ? "bg-success/10 text-success"
               : "bg-brand/10 text-brand group-hover:bg-brand group-hover:text-white",
@@ -35,8 +35,32 @@ export function SessionRow({ audio, nomor, completed = false, progressPercent = 
             <Check className="h-4 w-4" aria-label="Selesai didengarkan" />
           ) : (
             <>
-              <span className="text-sm font-semibold group-hover:hidden">{nomor}</span>
-              <Play className="hidden h-4 w-4 fill-current group-hover:block" aria-hidden />
+              {/* Mini CD yang berputar saat hover */}
+              <span
+                className="group-hover:animate-spin-slow motion-reduce:group-hover:animate-none absolute inset-0 flex items-center justify-center"
+                aria-hidden
+              >
+                <span className="relative h-8 w-8 rounded-full">
+                  <span
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                      background:
+                        "radial-gradient(circle at 32% 28%, #fdfdfe 0%, #d7dce3 16%, #b4bcc7 32%, #8b95a3 50%, #5c6575 68%, #353b47 84%, #242830 100%)",
+                    }}
+                  />
+                  <span className="absolute inset-[10%] rounded-full border border-white/25" />
+                  <span className="absolute inset-[16%] rounded-full border border-white/15" />
+                  <span className="absolute inset-[22%] rounded-full border border-black/20" />
+                  <span className="absolute left-1/2 top-[2%] h-[44%] w-[12%] -translate-x-1/2 rounded-full bg-white/35 blur-[1px]" />
+                </span>
+              </span>
+              <span className="relative z-10 text-[11px] font-semibold tabular-nums group-hover:hidden">
+                {nomor}
+              </span>
+              <Play
+                className="relative z-10 hidden h-4 w-4 fill-current group-hover:block"
+                aria-hidden
+              />
             </>
           )}
         </span>
