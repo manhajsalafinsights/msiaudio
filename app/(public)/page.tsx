@@ -184,6 +184,48 @@ async function TematikGrid() {
 }
 
 /* ================================================================
+   Talk Show
+   ================================================================ */
+
+function TalkShowSection() {
+  return (
+    <Container className="py-4 sm:py-5">
+      <SectionHeader title="Talk Show" moreHref="/kitab/talk-show" />
+      <Suspense
+        fallback={
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="skeleton aspect-[4/3] rounded-2xl" />
+            ))}
+          </div>
+        }
+      >
+        <TalkShowGrid />
+      </Suspense>
+    </Container>
+  );
+}
+
+async function TalkShowGrid() {
+  const talkShow = await findPublishedSeriesTypeBySlug("talk-show");
+  if (!talkShow || talkShow.series.length === 0) {
+    return (
+      <EmptyState
+        title="Belum ada talk show"
+        description="Talk show akan muncul di sini."
+      />
+    );
+  }
+  return (
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {talkShow.series.slice(0, 4).map((series) => (
+        <SeriesCard key={series.id} series={series} />
+      ))}
+    </div>
+  );
+}
+
+/* ================================================================
    Kategori
    ================================================================ */
 
@@ -232,6 +274,7 @@ export default function HomePage() {
       <KitabSection />
       <LatestSeriesSection />
       <TematikSection />
+      <TalkShowSection />
       <CategoriesSection />
     </>
   );
