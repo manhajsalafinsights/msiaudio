@@ -20,7 +20,7 @@ export type YouTubePlaylistResult =
   | { ok: false; error: { code: string; message: string } };
 
 const PLAYLIST_ID_PATTERN = /^[A-Za-z0-9_-]{10,}$/;
-const MAX_ITEMS_API = 2000;
+const MAX_ITEMS_API = 5000;
 const MAX_ITEMS_RSS = 50;
 
 /** Ekstrak playlist ID dari URL (list=...) atau ID polos. */
@@ -230,7 +230,7 @@ async function fetchPlaylistViaRss(playlistId: string): Promise<YouTubePlaylistR
 /**
  * Ambil daftar video playlist YouTube.
  * Prioritas: YouTube Data API v3 (bila YOUTUBE_API_KEY tersedia) — semua video + durasi,
- * maks. 2000 video.
+ * maks. 5000 video.
  * Cadangan: RSS feeds/videos.xml — max ~50 video terbaru, tanpa durasi.
  */
 export async function fetchYouTubePlaylist(playlistId: string): Promise<YouTubePlaylistResult> {
