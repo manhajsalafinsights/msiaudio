@@ -72,8 +72,8 @@ function ContinueHero({ item }: { item: ContinueLearningItem }) {
         aria-hidden
       />
 
-      <div className="relative flex flex-col items-center gap-6 sm:flex-row sm:gap-10">
-        <div className="relative h-40 w-40 shrink-0 sm:h-52 sm:w-52">
+      <div className="relative flex flex-row items-center gap-4 sm:gap-10">
+        <div className="relative h-28 w-28 shrink-0 sm:h-52 sm:w-52">
           <AudioDisc
             src={item.series.cover}
             alt={item.series.judul}
@@ -81,36 +81,36 @@ function ContinueHero({ item }: { item: ContinueLearningItem }) {
           />
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col items-center gap-3 text-center sm:items-start sm:text-left">
-          <p className="text-xs font-semibold uppercase tracking-wider text-brand">
+        <div className="flex min-w-0 flex-1 flex-col items-start gap-2 text-left sm:gap-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-brand sm:text-xs">
             Terakhir Didengarkan
           </p>
 
           <Link
             href={`/series/${item.series.slug}`}
-            className="line-clamp-2 text-xl font-bold tracking-tight hover:text-brand sm:text-2xl"
+            className="line-clamp-2 text-base font-bold tracking-tight hover:text-brand sm:text-2xl"
           >
             {item.series.judul}
           </Link>
 
-          <p className="truncate text-sm text-muted">
+          <p className="line-clamp-1 text-xs text-muted sm:text-sm">
             {audio.judul} · {formatDurationHuman(audio.durasi)}
           </p>
 
-          <div className="mt-1 flex flex-wrap items-center gap-4">
-            <div className="relative flex h-20 w-20 items-center justify-center">
+          <div className="mt-0.5 flex flex-wrap items-center gap-3 sm:mt-1 sm:gap-4">
+            <div className="relative flex h-16 w-16 items-center justify-center sm:h-20 sm:w-20">
               <ProgressRing percent={percent} className="absolute inset-0 h-full w-full" />
               <Link
                 href={`/audio/${audio.slug}`}
                 aria-label={`Lanjutkan ${audio.judul}`}
-                className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full bg-brand text-white shadow-md shadow-brand/20 transition-all hover:bg-brand-hover hover:shadow-lg active:scale-95"
+                className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full bg-brand text-white shadow-md shadow-brand/20 transition-all hover:bg-brand-hover hover:shadow-lg active:scale-95 sm:h-12 sm:w-12"
               >
-                <Play className="h-5 w-5 fill-current" />
+                <Play className="h-4 w-4 fill-current sm:h-5 sm:w-5" />
               </Link>
             </div>
             <div className="flex flex-col gap-0.5">
-              <span className="text-xs font-medium text-muted">Progress</span>
-              <span className="text-sm font-semibold text-brand">{percent}% selesai</span>
+              <span className="text-[11px] font-medium text-muted sm:text-xs">Progress</span>
+              <span className="text-xs font-semibold text-brand sm:text-sm">{percent}% selesai</span>
             </div>
           </div>
         </div>
