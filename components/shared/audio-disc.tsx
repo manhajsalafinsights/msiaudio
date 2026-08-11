@@ -1,0 +1,73 @@
+import { Headphones } from "lucide-react";
+import { cn } from "@/utils/cn";
+
+type AudioDiscProps = {
+  className?: string;
+};
+
+/**
+ * Piringan CD yang berputar — pengganti cover video (mis. thumbnail YouTube)
+ * agar sumber audio tidak terlihat dari kartu.
+ */
+export function AudioDisc({ className }: AudioDiscProps) {
+  return (
+    <div
+      className={cn(
+        "relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-br from-surface-sunken via-background to-surface-sunken",
+        className,
+      )}
+      aria-hidden
+    >
+      <div
+        className="absolute inset-0 opacity-70"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.08) 0%, transparent 40%), radial-gradient(circle at 80% 80%, rgba(255,255,255,0.06) 0%, transparent 45%)",
+        }}
+      />
+      <div className="absolute inset-8 rounded-full bg-brand/10 blur-2xl" aria-hidden />
+
+      <div
+        className="relative aspect-square h-[76%] animate-spin-slow rounded-full motion-reduce:animate-none"
+        style={{ animationDuration: "8s", animationTimingFunction: "linear" }}
+      >
+        {/* CD body */}
+        <div
+          className="absolute inset-0 rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle at 32% 28%, #fdfdfe 0%, #d7dce3 16%, #b4bcc7 32%, #8b95a3 50%, #5c6575 68%, #353b47 84%, #242830 100%)",
+          }}
+          aria-hidden
+        />
+
+        {/* Groove rings */}
+        <div className="absolute inset-[5%] rounded-full border border-white/15" aria-hidden />
+        <div className="absolute inset-[9%] rounded-full border border-white/10" aria-hidden />
+        <div className="absolute inset-[13%] rounded-full border border-black/15" aria-hidden />
+
+        {/* Label */}
+        <div className="absolute inset-[19%] flex items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-strong ring-4 ring-black/25">
+          <Headphones className="h-2/5 w-2/5 text-white/90" aria-hidden />
+        </div>
+
+        {/* Center spindle */}
+        <div
+          className="absolute left-1/2 top-1/2 h-[22%] w-[22%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-950 ring-4 ring-black/40"
+          aria-hidden
+        />
+      </div>
+
+      {/* Static sheen (di luar disc agar tidak ikut berputar) */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]" aria-hidden>
+        <div
+          className="absolute -left-1/3 -top-1/3 h-[130%] w-[70%] rotate-[24deg] opacity-25"
+          style={{
+            background:
+              "linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.9) 50%, transparent 70%)",
+          }}
+        />
+      </div>
+    </div>
+  );
+}

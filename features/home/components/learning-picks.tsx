@@ -4,6 +4,7 @@ import { Play } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { SectionHeader } from "@/components/shared/section-header";
 import { Cover } from "@/components/shared/cover";
+import { AudioDisc } from "@/components/shared/audio-disc";
 import { formatDuration } from "@/utils/duration";
 import { AutoRotatingList } from "@/features/home/components/auto-rotating-list";
 import { getPromoLearningAudios } from "@/services/audio-service";
@@ -18,16 +19,21 @@ function LearningPickCard({ pick }: { pick: LearningPick }) {
   const { label, audio } = pick;
   const speakerName = audio.series?.speakers[0]?.speaker.nama;
   const meta = speakerName ?? audio.series?.judul;
+  const isYouTube = audio.mediaSources[0]?.provider === "YOUTUBE";
 
   return (
     <div className="group flex h-full flex-col gap-2.5 rounded-2xl p-1.5 transition-colors duration-200 hover:bg-black/[0.05] dark:hover:bg-white/[0.06]">
       <Link href={`/audio/${audio.slug}`} className="flex h-full flex-col gap-2.5">
         <span className="relative block aspect-[4/3] w-full overflow-hidden">
-          <Cover
-            src={audio.cover ?? audio.series?.cover}
-            alt={audio.judul}
-            className="h-full w-full rounded-none"
-          />
+          {isYouTube ? (
+            <AudioDisc className="h-full w-full rounded-none" />
+          ) : (
+            <Cover
+              src={audio.cover ?? audio.series?.cover}
+              alt={audio.judul}
+              className="h-full w-full rounded-none"
+            />
+          )}
 
           <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
             {label}

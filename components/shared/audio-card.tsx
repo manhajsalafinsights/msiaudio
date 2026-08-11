@@ -3,6 +3,7 @@ import { Play } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { formatDuration } from "@/utils/duration";
 import { Cover } from "@/components/shared/cover";
+import { AudioDisc } from "@/components/shared/audio-disc";
 import type { AudioCard } from "@/repositories/audio-repository";
 
 type AudioCardProps = {
@@ -13,6 +14,7 @@ type AudioCardProps = {
 export function AudioCard({ audio, className }: AudioCardProps) {
   const speakerName = audio.series?.speakers[0]?.speaker.nama;
   const meta = speakerName ?? audio.series?.judul;
+  const isYouTube = audio.mediaSources[0]?.provider === "YOUTUBE";
 
   return (
     <div className={cn("h-full", className)}>
@@ -21,12 +23,16 @@ export function AudioCard({ audio, className }: AudioCardProps) {
         className="group flex h-full flex-col gap-2 rounded-xl p-1.5 transition-colors duration-200 hover:bg-black/[0.05] dark:hover:bg-white/[0.06]"
       >
         <span className="relative block aspect-square w-full overflow-hidden">
-          <Cover
-            src={audio.cover ?? audio.series?.cover}
-            alt={audio.judul}
-            variant="square"
-            className="h-full w-full rounded-none"
-          />
+          {isYouTube ? (
+            <AudioDisc className="h-full w-full rounded-none" />
+          ) : (
+            <Cover
+              src={audio.cover ?? audio.series?.cover}
+              alt={audio.judul}
+              variant="square"
+              className="h-full w-full rounded-none"
+            />
+          )}
 
           {/* Tombol play: selalu terlihat di mobile, muncul saat hover di desktop */}
           <span
