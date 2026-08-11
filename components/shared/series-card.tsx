@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Clock, ListMusic } from "lucide-react";
 import { formatDurationHuman } from "@/utils/duration";
 import type { SeriesPublic } from "@/repositories/series-repository";
-import { Cover } from "@/components/shared/cover";
+import { AudioTape } from "@/components/shared/audio-tape";
 import { ProgressBar } from "@/components/ui/progress-bar";
 
 export function SeriesCard({
@@ -20,7 +20,7 @@ export function SeriesCard({
   return (
     <Link href={`/series/${series.slug}`} className="group block">
       <div className="card card-interactive p-3">
-        <Cover src={series.cover} alt={series.judul} className="w-full rounded-xl" />
+        <AudioTape src={series.cover} alt={series.judul} className="aspect-video w-full rounded-xl" />
         <div className="mt-3">
           <h3 className="line-clamp-2 text-sm font-semibold leading-snug group-hover:text-brand">
             {series.judul}
