@@ -26,7 +26,11 @@ function LearningPickCard({ pick }: { pick: LearningPick }) {
       <Link href={`/audio/${audio.slug}`} className="flex h-full flex-col gap-2.5">
         <span className="relative block aspect-[4/3] w-full overflow-hidden">
           {isYouTube ? (
-            <AudioDisc className="h-full w-full rounded-none" />
+            <AudioDisc
+              src={audio.cover ?? audio.series?.cover}
+              alt={audio.judul}
+              className="h-full w-full rounded-none"
+            />
           ) : (
             <Cover
               src={audio.cover ?? audio.series?.cover}

@@ -1,15 +1,17 @@
 "use client";
 
 import { Headphones } from "lucide-react";
+import { Cover } from "@/components/shared/cover";
 import { cn } from "@/utils/cn";
 
 interface PlayerCoverProps {
+  src: string | null;
   alt: string;
   isPlaying: boolean;
 }
 
 /** CD (piringan) yang dimiringkan dan berputar saat diputar. */
-export function PlayerCover({ alt, isPlaying }: PlayerCoverProps) {
+export function PlayerCover({ src, alt, isPlaying }: PlayerCoverProps) {
   return (
     <div className="relative flex items-center justify-center py-2" style={{ perspective: "1200px" }}>
       {/* Dynamic glow effect */}
@@ -59,9 +61,20 @@ export function PlayerCover({ alt, isPlaying }: PlayerCoverProps) {
           <div className="absolute inset-[9%] rounded-full border border-white/10" aria-hidden />
           <div className="absolute inset-[13%] rounded-full border border-black/15" aria-hidden />
 
-          {/* Label (bukan cover — agar sumber audio tidak terlihat) */}
-          <div className="absolute inset-[19%] flex items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-brand to-brand-strong ring-4 ring-black/25">
-            <Headphones className="h-2/5 w-2/5 text-white/90" aria-hidden />
+          {/* Label (cover) */}
+          <div className="absolute inset-[19%] overflow-hidden rounded-full ring-4 ring-black/25">
+            {src ? (
+              <Cover
+                src={src}
+                alt={alt}
+                variant="square"
+                className="h-full w-full rounded-full"
+              />
+            ) : (
+              <div className="relative flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-strong">
+                <Headphones className="h-12 w-12 text-white/90" aria-hidden />
+              </div>
+            )}
           </div>
 
           {/* Center spindle */}

@@ -273,6 +273,7 @@ export function PlayerFull({
           {/* Kiri: artwork */}
           <div className="flex items-center justify-center">
             <PlayerCover
+              src={displayAudio.cover}
               alt={displayAudio.judul}
               isPlaying={isPlaying && hasLoaded}
             />

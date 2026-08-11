@@ -1,15 +1,18 @@
 import { Headphones } from "lucide-react";
+import { Cover } from "@/components/shared/cover";
 import { cn } from "@/utils/cn";
 
 type AudioDiscProps = {
+  src?: string | null;
+  alt?: string;
   className?: string;
 };
 
 /**
- * Piringan CD yang berputar — pengganti cover video (mis. thumbnail YouTube)
- * agar sumber audio tidak terlihat dari kartu.
+ * Piringan CD yang berputar dengan cover di label tengah — pengganti tampilan
+ * cover video (mis. thumbnail YouTube) agar kartu terlihat seperti audio CD.
  */
-export function AudioDisc({ className }: AudioDiscProps) {
+export function AudioDisc({ src, alt, className }: AudioDiscProps) {
   return (
     <div
       className={cn(
@@ -46,9 +49,20 @@ export function AudioDisc({ className }: AudioDiscProps) {
         <div className="absolute inset-[9%] rounded-full border border-white/10" aria-hidden />
         <div className="absolute inset-[13%] rounded-full border border-black/15" aria-hidden />
 
-        {/* Label */}
-        <div className="absolute inset-[19%] flex items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-strong ring-4 ring-black/25">
-          <Headphones className="h-2/5 w-2/5 text-white/90" aria-hidden />
+        {/* Label (cover) */}
+        <div className="absolute inset-[19%] overflow-hidden rounded-full ring-4 ring-black/25">
+          {src ? (
+            <Cover
+              src={src}
+              alt={alt ?? ""}
+              variant="square"
+              className="h-full w-full rounded-full"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-strong">
+              <Headphones className="h-2/5 w-2/5 text-white/90" aria-hidden />
+            </div>
+          )}
         </div>
 
         {/* Center spindle */}

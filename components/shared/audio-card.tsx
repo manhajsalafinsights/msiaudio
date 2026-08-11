@@ -24,7 +24,11 @@ export function AudioCard({ audio, className }: AudioCardProps) {
       >
         <span className="relative block aspect-square w-full overflow-hidden">
           {isYouTube ? (
-            <AudioDisc className="h-full w-full rounded-none" />
+            <AudioDisc
+              src={audio.cover ?? audio.series?.cover}
+              alt={audio.judul}
+              className="h-full w-full rounded-none"
+            />
           ) : (
             <Cover
               src={audio.cover ?? audio.series?.cover}
