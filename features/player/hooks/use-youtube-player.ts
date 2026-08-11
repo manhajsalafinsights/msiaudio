@@ -388,7 +388,10 @@ export function useYouTubePlayer(): UseYouTubePlayerReturn {
 
     try {
       loadedVideoIdRef.current = source.providerId;
-      player.cueVideoById(source.providerId);
+      // loadVideoById = muat + langsung memutar. cueVideoById (antre saja)
+      // diikuti playVideo() sering gagal diam-diam setelah video berakhir,
+      // sehingga auto-next berhenti.
+      player.loadVideoById(source.providerId);
       store.actions.setStatus("playing");
     } catch {
       store.actions.setError("Gagal memuat audio berikutnya");
