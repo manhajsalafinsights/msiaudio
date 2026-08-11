@@ -71,7 +71,13 @@ export function PlaylistImport({
         return;
       }
       setPreview(res.data);
-      setSelected(new Set(res.data.items.filter((i) => !i.duplicate).map((i) => i.videoId)));
+      setSelected(
+        new Set(
+          res.data.items
+            .filter((i) => !i.duplicate && !i.privateVideo)
+            .map((i) => i.videoId),
+        ),
+      );
     });
   };
 
@@ -89,7 +95,7 @@ export function PlaylistImport({
 
   const selectAll = () => {
     if (!preview) return;
-    setSelected(new Set(preview.items.map((i) => i.videoId)));
+    setSelected(new Set(preview.items.filter((i) => !i.privateVideo).map((i) => i.videoId)));
   };
 
   const selectNone = () => setSelected(new Set());
@@ -140,10 +146,15 @@ export function PlaylistImport({
             <span className="font-medium text-foreground">{summary.seriesTitle}</span>.
           </p>
         </div>
-        {(summary.skippedDuplicates > 0 || summary.skippedSesiConflict > 0) && (
+        {(summary.skippedDuplicates > 0 ||
+          summary.skippedUnavailable > 0 ||
+          summary.skippedSesiConflict > 0) && (
           <ul className="max-w-md list-inside list-disc text-left text-sm text-muted">
             {summary.skippedDuplicates > 0 && (
               <li>{summary.skippedDuplicates} video dilewati karena sudah dipakai audio lain.</li>
+            )}
+            {summary.skippedUnavailable > 0 && (
+              <li>{summary.skippedUnavailable} video private/deleted dilewati.</li>
             )}
             {summary.skippedSesiConflict > 0 && (
               <li>{summary.skippedSesiConflict} video dilewati karena nomor sesi bertabrakan.</li>
@@ -216,6 +227,9 @@ export function PlaylistImport({
                       — playlist lebih besar, hanya sebagian terambil
                     </span>
                   )}
+                  {preview.items.some((i) => i.privateVideo) && (
+                    <span className="text-warning">— video private/deleted tidak dicentang</span>
+                  )}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -272,6 +286,11 @@ export function PlaylistImport({
                     {item.duplicate && (
                       <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted">
                         Sudah ada
+                      </span>
+                    )}
+                    {item.privateVideo && (
+                      <span className="shrink-0 rounded bg-warning/15 px-1.5 py-0.5 text-[10px] font-medium text-warning">
+                        Private
                       </span>
                     )}
                     <Button variant="ghost" size="icon" asChild>

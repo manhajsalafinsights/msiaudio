@@ -22,6 +22,7 @@ export type PlaylistPreviewItem = {
   durationSeconds: number | null;
   thumbnail: string;
   duplicate: boolean;
+  privateVideo: boolean;
 };
 
 export type PlaylistPreview = {
@@ -37,8 +38,14 @@ export type ImportSummary = {
   seriesTitle: string;
   imported: number;
   skippedDuplicates: number;
+  skippedUnavailable: number;
   skippedSesiConflict: number;
 };
+
+/** Deteksi video yang tidak tersedia (judul standar YouTube Data API). */
+function isUnavailableVideo(title: string): boolean {
+  return /^(?:private|deleted) video$/i.test(title.trim());
+}
 
 const confirmSchema = z
   .object({
@@ -103,6 +110,7 @@ export async function previewPlaylist(playlistUrl: string): Promise<ActionState<
         items: result.items.map((i) => ({
           ...i,
           duplicate: duplicateIds.has(i.videoId),
+          privateVideo: isUnavailableVideo(i.title),
         })),
       },
     };
@@ -159,7 +167,9 @@ export async function importPlaylistAsSeries(
     if (!result.ok) return { ok: false, error: result.error };
 
     const selectedIds = new Set(data.selectedVideoIds);
-    const items = result.items.filter((i) => selectedIds.has(i.videoId));
+    const items = result.items.filter(
+      (i) => selectedIds.has(i.videoId) && !isUnavailableVideo(i.title),
+    );
     if (items.length === 0) {
       return {
         ok: false,
@@ -241,6 +251,9 @@ export async function importPlaylistAsSeries(
     let imported = 0;
     let skippedDuplicates = 0;
     const skippedSesiConflict = 0;
+    const skippedUnavailable = result.items.filter(
+      (i) => selectedIds.has(i.videoId) && isUnavailableVideo(i.title),
+    ).length;
     const audioRows: {
       item: (typeof items)[number];
       judul: string;
@@ -302,6 +315,7 @@ export async function importPlaylistAsSeries(
         seriesTitle: series.judul,
         imported,
         skippedDuplicates,
+        skippedUnavailable,
         skippedSesiConflict,
       },
     };
