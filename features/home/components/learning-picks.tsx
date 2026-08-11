@@ -5,6 +5,7 @@ import { Container } from "@/components/ui/container";
 import { SectionHeader } from "@/components/shared/section-header";
 import { Cover } from "@/components/shared/cover";
 import { formatDuration } from "@/utils/duration";
+import { AutoRotatingList } from "@/features/home/components/auto-rotating-list";
 import { getPromoLearningAudios } from "@/services/audio-service";
 import type { AudioCard } from "@/repositories/audio-repository";
 
@@ -19,11 +20,8 @@ function LearningPickCard({ pick }: { pick: LearningPick }) {
   const meta = speakerName ?? audio.series?.judul;
 
   return (
-    <li className="w-[78%] flex-none snap-start sm:w-64 md:w-auto">
-      <Link
-        href={`/audio/${audio.slug}`}
-        className="group flex h-full flex-col gap-2.5 rounded-2xl p-1.5 transition-colors duration-200 hover:bg-black/[0.05] dark:hover:bg-white/[0.06]"
-      >
+    <div className="group flex h-full flex-col gap-2.5 rounded-2xl p-1.5 transition-colors duration-200 hover:bg-black/[0.05] dark:hover:bg-white/[0.06]">
+      <Link href={`/audio/${audio.slug}`} className="flex h-full flex-col gap-2.5">
         <span className="relative block aspect-[4/3] w-full overflow-hidden">
           <Cover
             src={audio.cover ?? audio.series?.cover}
@@ -52,7 +50,7 @@ function LearningPickCard({ pick }: { pick: LearningPick }) {
           Dengarkan
         </span>
       </Link>
-    </li>
+    </div>
   );
 }
 
@@ -84,10 +82,12 @@ async function LearningPicksList() {
   if (picks.length === 0) return null;
 
   return (
-    <ul className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0 md:pb-0">
-      {picks.map((pick) => (
+    <AutoRotatingList
+      ariaLabel="Pilihan untuk belajar yang berganti otomatis"
+      slidesPerView={{ base: 1, sm: 2, md: 3 }}
+      items={picks.map((pick) => (
         <LearningPickCard key={pick.label} pick={pick} />
       ))}
-    </ul>
+    />
   );
 }

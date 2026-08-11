@@ -20,6 +20,7 @@ import { ContinueLearning } from "@/features/progress/continue-learning";
 import HeroSection from "@/features/home/components/hero-section";
 import HomeStats from "@/features/home/components/home-stats";
 import { HomeSearch } from "@/features/home/components/home-search";
+import { AutoRotatingList } from "@/features/home/components/auto-rotating-list";
 import { LearningPicksSection } from "@/features/home/components/learning-picks";
 
 export const revalidate = 60;
@@ -62,11 +63,13 @@ async function LatestAudioList() {
     return <EmptyState title="Belum ada kajian" description="Kajian akan muncul di sini." />;
   }
   return (
-    <ul className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0 md:pb-0 lg:grid-cols-4">
-      {audioList.map((audio) => (
+    <AutoRotatingList
+      ariaLabel="Kajian terbaru yang berganti otomatis"
+      slidesPerView={{ base: 1, sm: 2, md: 3, lg: 4 }}
+      items={audioList.map((audio) => (
         <AudioCard key={audio.id} audio={audio} />
       ))}
-    </ul>
+    />
   );
 }
 

@@ -15,7 +15,7 @@ export function AudioCard({ audio, className }: AudioCardProps) {
   const meta = speakerName ?? audio.series?.judul;
 
   return (
-    <li className={cn("w-[68%] flex-none snap-start sm:w-60 md:w-auto", className)}>
+    <div className={cn("h-full", className)}>
       <Link
         href={`/audio/${audio.slug}`}
         className="group flex h-full flex-col gap-2 rounded-xl p-1.5 transition-colors duration-200 hover:bg-black/[0.05] dark:hover:bg-white/[0.06]"
@@ -55,6 +55,6 @@ export function AudioCard({ audio, className }: AudioCardProps) {
           {meta && <span className="truncate text-xs text-muted">{meta}</span>}
         </span>
       </Link>
-    </li>
+    </div>
   );
 }
