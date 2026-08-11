@@ -1,6 +1,6 @@
 "use client";
 
-import { Headphones } from "lucide-react";
+import { Headphones, Music } from "lucide-react";
 import { Cover } from "@/components/shared/cover";
 import { cn } from "@/utils/cn";
 
@@ -90,6 +90,11 @@ export function PlayerCover({ src, alt, isPlaying }: PlayerCoverProps) {
             }}
           />
         </div>
+
+        {/* Ikon musik pojok kiri atas */}
+        <span className="absolute left-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-brand/90 text-white shadow-sm backdrop-blur-sm">
+          <Music className="h-4 w-4" aria-hidden />
+        </span>
       </div>
     </div>
   );

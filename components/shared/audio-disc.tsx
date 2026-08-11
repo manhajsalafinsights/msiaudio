@@ -1,4 +1,4 @@
-import { Headphones } from "lucide-react";
+import { Headphones, Music } from "lucide-react";
 import { Cover } from "@/components/shared/cover";
 import { cn } from "@/utils/cn";
 
@@ -82,6 +82,11 @@ export function AudioDisc({ src, alt, className }: AudioDiscProps) {
           }}
         />
       </div>
+
+      {/* Ikon musik pojok kiri atas */}
+      <span className="absolute left-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-brand/90 text-white shadow-sm backdrop-blur-sm">
+        <Music className="h-3.5 w-3.5" aria-hidden />
+      </span>
     </div>
   );
 }
