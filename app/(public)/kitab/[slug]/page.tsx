@@ -7,7 +7,7 @@ import { Container } from "@/components/ui/container";
 import { Heading, Text } from "@/components/ui/typography";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
-import { SeriesRow } from "@/components/shared/series-row";
+import { SeriesCard } from "@/components/shared/series-card";
 
 export const revalidate = 60;
 export const dynamicParams = true;
@@ -80,11 +80,11 @@ export default async function KitabDetailPage({ params }: { params: Promise<{ sl
       <section className="flex flex-col gap-4">
         <Heading as="h2">Series</Heading>
         {kitab.series.length > 0 ? (
-          <ul className="[&>li]:mb-2 lg:columns-4 lg:gap-2 lg:[&>li]:break-inside-avoid">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {kitab.series.map((series) => (
-              <SeriesRow key={series.id} series={series} />
+              <SeriesCard key={series.id} series={series} />
             ))}
-          </ul>
+          </div>
         ) : (
           <EmptyState title="Belum ada series" description="Belum ada series pada kitab ini." />
         )}
