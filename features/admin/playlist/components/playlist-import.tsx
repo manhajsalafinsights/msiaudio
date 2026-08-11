@@ -188,7 +188,7 @@ export function PlaylistImport({
           </Button>
         </div>
         <p className="text-xs text-muted">
-          Menggunakan YouTube Data API (semua video + durasi) bila key tersedia, atau RSS feed
+          Menggunakan YouTube Data API (maks. 2000 video + durasi) bila key tersedia, atau RSS feed
           (maks. 50 video terbaru) bila tidak.
         </p>
       </div>
