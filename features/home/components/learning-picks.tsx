@@ -39,7 +39,7 @@ function LearningPickCard({ pick }: { pick: LearningPick }) {
             />
           )}
 
-          <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
+          <span className="absolute right-2 top-2 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
             {label}
           </span>
 
