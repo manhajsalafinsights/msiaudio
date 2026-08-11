@@ -21,15 +21,43 @@ const BREAKPOINTS: Array<{ key: Breakpoint; query: string }> = [
   { key: "sm", query: "(min-width: 640px)" },
 ];
 
-const WIDTH_CLASSES: Record<Breakpoint, Record<number, string>> = {
-  sm: { 2: "sm:w-1/2", 3: "sm:w-1/3", 4: "sm:w-1/4" },
-  md: { 2: "md:w-1/2", 3: "md:w-1/3", 4: "md:w-1/4" },
-  lg: { 2: "lg:w-1/2", 3: "lg:w-1/3", 4: "lg:w-1/4", 5: "lg:w-1/5" },
-  xl: { 3: "xl:w-1/3", 4: "xl:w-1/4", 5: "xl:w-1/5" },
+// Lebar kartu memakai calc() agar tepat N kartu muat per baris termasuk gap
+// (gap-3 = 12px), sehingga tidak ada kartu berikutnya yang "kepepet" kelihatan.
+const WIDTH_CLASSES: Record<string, Record<number, string>> = {
+  base: {
+    2: "w-[calc(50%-6px)]",
+    3: "w-[calc(33.333%-8px)]",
+    4: "w-[calc(25%-9px)]",
+  },
+  sm: {
+    2: "sm:w-[calc(50%-6px)]",
+    3: "sm:w-[calc(33.333%-8px)]",
+    4: "sm:w-[calc(25%-9px)]",
+  },
+  md: {
+    2: "md:w-[calc(50%-6px)]",
+    3: "md:w-[calc(33.333%-8px)]",
+    4: "md:w-[calc(25%-9px)]",
+  },
+  lg: {
+    2: "lg:w-[calc(50%-6px)]",
+    3: "lg:w-[calc(33.333%-8px)]",
+    4: "lg:w-[calc(25%-9px)]",
+    5: "lg:w-[calc(20%-9.6px)]",
+  },
+  xl: {
+    3: "xl:w-[calc(33.333%-8px)]",
+    4: "xl:w-[calc(25%-9px)]",
+    5: "xl:w-[calc(20%-9.6px)]",
+  },
 };
 
 function getWidthClass(config: SlidesPerView): string {
-  const parts: string[] = ["w-full"];
+  const parts: string[] = [];
+  const baseValue = config.base;
+  if (baseValue != null && WIDTH_CLASSES.base[baseValue]) {
+    parts.push(WIDTH_CLASSES.base[baseValue]);
+  }
   for (const bp of BREAKPOINTS) {
     const value = config[bp.key];
     if (value != null && WIDTH_CLASSES[bp.key][value]) {

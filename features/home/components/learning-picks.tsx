@@ -94,7 +94,7 @@ async function LearningPicksList() {
   return (
     <AutoRotatingList
       ariaLabel="Pilihan untuk belajar yang berganti otomatis"
-      slidesPerView={{ base: 1, sm: 2, md: 3 }}
+      slidesPerView={{ base: 2, sm: 2, md: 3 }}
       items={picks.map((pick) => (
         <LearningPickCard key={pick.label} pick={pick} />
       ))}
