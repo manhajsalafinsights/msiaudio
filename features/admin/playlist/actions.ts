@@ -173,6 +173,64 @@ export async function importPlaylistAsSeries(
       };
     }
 
+    // Hitung duplikat & audio yang benar-benar bisa diimpor SEBELUM membuat
+    // series, supaya mode "new" tidak menghasilkan series kosong.
+    const existingMedia = await prisma.mediaSource.findMany({
+      where: { provider: "YOUTUBE", providerId: { in: items.map((i) => i.videoId) } },
+      select: { providerId: true },
+    });
+    const duplicateIds = new Set(existingMedia.map((e) => e.providerId));
+
+    const skippedUnavailable = result.items.filter(
+      (i) => selectedIds.has(i.videoId) && isUnavailableVideo(i.title),
+    ).length;
+
+    // Hitung slug audio unik (jaga dari bentrok antar item maupun DB).
+    const usedSlugs = new Set<string>();
+    const prep = items.map((item) => {
+      const judul = data.cleanTitles ? cleanLeadingNumber(item.title) : item.title;
+      return { item, judul };
+    });
+
+    async function nextAudioSlug(base: string, fallbackIndex: number): Promise<string> {
+      let candidate = base || `audio-${fallbackIndex}`;
+      let counter = 2;
+      while (usedSlugs.has(candidate) || (await audioSlugExists(candidate))) {
+        candidate = `${base || `audio-${fallbackIndex}`}-${counter}`;
+        counter += 1;
+      }
+      usedSlugs.add(candidate);
+      return candidate;
+    }
+
+    let imported = 0;
+    let skippedDuplicates = 0;
+    const skippedSesiConflict = 0;
+    const audioRows: {
+      item: (typeof items)[number];
+      judul: string;
+      slug: string;
+    }[] = [];
+
+    for (const p of prep) {
+      if (duplicateIds.has(p.item.videoId)) {
+        skippedDuplicates++;
+        continue;
+      }
+      const slug = await nextAudioSlug(slugify(p.judul), p.item.position);
+      audioRows.push({ item: p.item, judul: p.judul, slug });
+    }
+
+    if (data.mode === "new" && audioRows.length === 0) {
+      return {
+        ok: false,
+        error: {
+          code: "ALL_DUPLICATES",
+          message: "Semua video sudah pernah diimpor (duplikat) — series tidak dibuat.",
+        },
+      };
+    }
+
     // Target series: mode "existing" menambahkan ke series yang dipilih;
     // mode "new" selalu membuat series baru (judul = judul playlist).
     let series: { id: string; judul: string; slug: string };
@@ -218,51 +276,6 @@ export async function importPlaylistAsSeries(
         },
       });
       series = { id: created.id, judul: created.judul, slug: created.slug };
-    }
-
-    const existingMedia = await prisma.mediaSource.findMany({
-      where: { provider: "YOUTUBE", providerId: { in: items.map((i) => i.videoId) } },
-      select: { providerId: true },
-    });
-    const duplicateIds = new Set(existingMedia.map((e) => e.providerId));
-
-    // Hitung slug audio unik (jaga dari bentrok antar item maupun DB).
-    const usedSlugs = new Set<string>();
-    const prep = items.map((item) => {
-      const judul = data.cleanTitles ? cleanLeadingNumber(item.title) : item.title;
-      return { item, judul };
-    });
-
-    async function nextAudioSlug(base: string, fallbackIndex: number): Promise<string> {
-      let candidate = base || `audio-${fallbackIndex}`;
-      let counter = 2;
-      while (usedSlugs.has(candidate) || (await audioSlugExists(candidate))) {
-        candidate = `${base || `audio-${fallbackIndex}`}-${counter}`;
-        counter += 1;
-      }
-      usedSlugs.add(candidate);
-      return candidate;
-    }
-
-    let imported = 0;
-    let skippedDuplicates = 0;
-    const skippedSesiConflict = 0;
-    const skippedUnavailable = result.items.filter(
-      (i) => selectedIds.has(i.videoId) && isUnavailableVideo(i.title),
-    ).length;
-    const audioRows: {
-      item: (typeof items)[number];
-      judul: string;
-      slug: string;
-    }[] = [];
-
-    for (const p of prep) {
-      if (duplicateIds.has(p.item.videoId)) {
-        skippedDuplicates++;
-        continue;
-      }
-      const slug = await nextAudioSlug(slugify(p.judul), p.item.position);
-      audioRows.push({ item: p.item, judul: p.judul, slug });
     }
 
     const CHUNK_SIZE = 200;
