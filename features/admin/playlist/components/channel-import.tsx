@@ -78,6 +78,7 @@ export function ChannelImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[]
     if (!preview) return;
     setError(null);
     setResults(null);
+    const autoDetect = seriesTypeId === "__auto__";
     const targets = preview.playlists.filter((p) => selected.has(p.id));
     startImport(async () => {
       const acc: ChannelPlaylistResult[] = [];
@@ -86,7 +87,8 @@ export function ChannelImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[]
         setImportingTitle(`${i + 1}/${targets.length} · ${target.title}`);
         const res = await importSingleChannelPlaylist({
           playlistId: target.id,
-          seriesTypeId,
+          seriesTypeId: autoDetect ? undefined : seriesTypeId,
+          autoDetectType: autoDetect,
           published,
           cleanTitles,
         });
@@ -221,7 +223,7 @@ export function ChannelImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[]
 
             <div>
               <label htmlFor="channel-series-type" className="mb-1.5 block text-sm font-medium">
-                Kitab / Tipe Series (dipakai semua playlist)
+                Kitab / Tipe Series {seriesTypeId === "__auto__" && "(deteksi otomatis)"}
               </label>
               <Select
                 id="channel-series-type"
@@ -230,6 +232,7 @@ export function ChannelImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[]
                 invalid={!seriesTypeId}
               >
                 <option value="">Pilih kitab...</option>
+                <option value="__auto__">Otomatis — deteksi dari judul (kitab/tematik)</option>
                 {seriesTypes.map((st) => (
                   <option key={st.id} value={st.id}>
                     {st.nama}
@@ -237,7 +240,10 @@ export function ChannelImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[]
                 ))}
               </Select>
               <p className="mt-1.5 text-xs text-muted">
-                Setiap playlist terpilih dibuatkan series baru dengan judul = judul playlist.
+                Otomatis: judul mengandung &quot;kitab bahasa arab&quot; → Kitab Bahasa Arab,
+                &quot;kitab muslimah&quot; → Kitab Muslimah, &quot;tematik&quot; → Tematik,
+                &quot;kitab&quot; → Kajian Kitab. Bila tidak cocok, playlist itu gagal &
+                dilaporkan — import ulang dengan pilihan manual.
               </p>
             </div>
 

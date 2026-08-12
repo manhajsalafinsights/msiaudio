@@ -50,13 +50,14 @@ const confirmSchema = z
     playlistUrl: z.string().trim().min(1, "URL playlist wajib diisi"),
     mode: z.enum(["new", "existing"]).default("new"),
     seriesTypeId: z.string().optional(),
+    autoDetectType: z.boolean().default(false),
     targetSeriesId: z.string().optional(),
     published: z.boolean(),
     cleanTitles: z.boolean(),
     selectedVideoIds: z.array(z.string()).min(1, "Pilih minimal 1 video"),
   })
   .superRefine((val, ctx) => {
-    if (val.mode === "new" && !val.seriesTypeId) {
+    if (val.mode === "new" && !val.seriesTypeId && !val.autoDetectType) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["seriesTypeId"],
@@ -71,6 +72,27 @@ const confirmSchema = z
       });
     }
   });
+
+// Kata kunci deteksi tipe series dari judul (urutan = prioritas, spesifik dulu).
+const TYPE_KEYWORDS: { slug: string; keywords: string[] }[] = [
+  { slug: "kitab-bahasa-arab", keywords: ["bahasa arab", "kitab arab"] },
+  { slug: "kitab-muslimah", keywords: ["kitab muslimah"] },
+  { slug: "tematik", keywords: ["tematik"] },
+  { slug: "kajian-kitab", keywords: ["kajian kitab", "kitab"] },
+];
+
+/** Deteksi otomatis tipe series dari judul (kitab / tematik), null bila tak cocok. */
+async function detectSeriesTypeId(title: string): Promise<string | null> {
+  const lower = title.toLowerCase();
+  const types = await prisma.seriesType.findMany({ select: { id: true, slug: true } });
+  const bySlug = new Map(types.map((t) => [t.slug, t.id]));
+  for (const rule of TYPE_KEYWORDS) {
+    if (rule.keywords.some((k) => lower.includes(k))) {
+      return bySlug.get(rule.slug) ?? null;
+    }
+  }
+  return null;
+}
 
 /** Ambil daftar video playlist untuk preview + tandai video yang sudah dipakai. */
 export async function previewPlaylist(playlistUrl: string): Promise<ActionState<PlaylistPreview>> {
@@ -311,8 +333,22 @@ export async function importPlaylistAsSeries(
       }
 
       if (action === "created") {
+        let typeId = data.seriesTypeId;
+        if (!typeId && data.autoDetectType) {
+          typeId = (await detectSeriesTypeId(seriesTitle)) ?? undefined;
+        }
+        if (!typeId) {
+          return {
+            ok: false,
+            error: {
+              code: "VALIDATION_ERROR",
+              message:
+                "Tidak dapat mendeteksi tipe series dari judul (kitab/tematik) — pilih tipe secara manual",
+            },
+          };
+        }
         const seriesType = await prisma.seriesType.findUnique({
-          where: { id: data.seriesTypeId },
+          where: { id: typeId },
           select: { id: true, slug: true },
         });
         if (!seriesType) {
@@ -327,7 +363,7 @@ export async function importPlaylistAsSeries(
             judul: seriesTitle,
             slug: await uniqueSlug(slugify(seriesTitle), (s) => seriesSlugExists(s)),
             cover: items[0]?.thumbnail ?? null,
-            seriesTypeId: data.seriesTypeId!,
+            seriesTypeId: typeId,
             published: data.published,
           },
         });

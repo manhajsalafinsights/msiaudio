@@ -108,7 +108,8 @@ export function PlaylistImport({
       const res = await importPlaylistAsSeries({
         playlistUrl: url,
         mode,
-        seriesTypeId: mode === "new" ? seriesTypeId : undefined,
+        seriesTypeId: mode === "new" && seriesTypeId !== "__auto__" ? seriesTypeId : undefined,
+        autoDetectType: mode === "new" && seriesTypeId === "__auto__",
         targetSeriesId: mode === "existing" ? targetSeriesId : undefined,
         published,
         cleanTitles,
@@ -402,6 +403,7 @@ export function PlaylistImport({
                     invalid={!seriesTypeId}
                   >
                     <option value="">Pilih kitab...</option>
+                    <option value="__auto__">Otomatis — deteksi dari judul (kitab/tematik)</option>
                     {seriesTypes.map((st) => (
                       <option key={st.id} value={st.id}>
                         {st.nama}

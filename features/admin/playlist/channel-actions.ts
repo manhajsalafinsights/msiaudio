@@ -31,7 +31,8 @@ export type ChannelPlaylistResult = {
 
 const importChannelSchema = z.object({
   playlistId: z.string().min(1, "Playlist ID wajib diisi"),
-  seriesTypeId: z.string().min(1, "Pilih kitab / tipe series"),
+  seriesTypeId: z.string().optional(),
+  autoDetectType: z.boolean().default(false),
   published: z.boolean(),
   cleanTitles: z.boolean(),
 });
@@ -90,7 +91,7 @@ export async function importSingleChannelPlaylist(
         error: { code: "VALIDATION_ERROR", message: parsed.error.issues[0]?.message ?? "Data tidak valid" },
       };
     }
-    const { playlistId, seriesTypeId, published, cleanTitles } = parsed.data;
+    const { playlistId, seriesTypeId, autoDetectType, published, cleanTitles } = parsed.data;
 
     const result: ChannelPlaylistResult = await (async () => {
       const fetched = await fetchYouTubePlaylist(playlistId);
@@ -116,6 +117,7 @@ export async function importSingleChannelPlaylist(
         playlistUrl: playlistId,
         mode: "new",
         seriesTypeId,
+        autoDetectType,
         published,
         cleanTitles,
         selectedVideoIds: usable.map((i) => i.videoId),
