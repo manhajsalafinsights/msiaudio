@@ -43,13 +43,13 @@ export async function seriesTypeSlugExists(slug: string, excludeId?: string) {
   return Boolean(item && item.id !== excludeId);
 }
 
-/** Search kitab (SeriesType) — hanya tipe yang punya series published. */
+/** Search kitab (SeriesType) — hanya tipe yang punya series published (dengan audio). */
 export async function searchSeriesTypes(q: string, limit = 20) {
   const query = q.trim();
   return prisma.seriesType.findMany({
     where: {
       nama: { contains: query, mode: "insensitive" },
-      series: { some: { published: true } },
+      series: { some: { published: true, audio: { some: { published: true } } } },
     },
     include: { _count: { select: { series: true } } },
     orderBy: { nama: "asc" },
@@ -61,7 +61,7 @@ export async function countSearchSeriesTypes(q: string) {
   return prisma.seriesType.count({
     where: {
       nama: { contains: q.trim(), mode: "insensitive" },
-      series: { some: { published: true } },
+      series: { some: { published: true, audio: { some: { published: true } } } },
     },
   });
 }
@@ -80,11 +80,14 @@ export type SeriesTypePublic = {
   viewCount: number;
 };
 
-/** Kitab (SeriesType) yang punya ≥1 series published — untuk /kitab & Pilihan Kitab.
+/** Kitab (SeriesType) yang punya ≥1 series published (dengan audio) — untuk /kitab & Pilihan Kitab.
  *  Hanya tipe isKitab (kajian berbasis kitab) yang tampil; tematik & lainnya tidak. */
 export async function listPublishedSeriesTypes(): Promise<SeriesTypePublic[]> {
   const rows = await prisma.seriesType.findMany({
-    where: { isKitab: true, series: { some: { published: true } } },
+    where: {
+      isKitab: true,
+      series: { some: { published: true, audio: { some: { published: true } } } },
+    },
     select: {
       id: true,
       nama: true,
@@ -92,7 +95,11 @@ export async function listPublishedSeriesTypes(): Promise<SeriesTypePublic[]> {
       icon: true,
       description: true,
       viewCount: true,
-      _count: { select: { series: { where: { published: true } } } },
+      _count: {
+        select: {
+          series: { where: { published: true, audio: { some: { published: true } } } },
+        },
+      },
     },
     orderBy: { nama: "asc" },
   });
@@ -107,22 +114,22 @@ export async function listPublishedSeriesTypes(): Promise<SeriesTypePublic[]> {
   }));
 }
 
-/** Semua slug kitab dengan series published — untuk generateStaticParams. */
+/** Semua slug kitab dengan series published (dengan audio) — untuk generateStaticParams. */
 export async function listPublishedSeriesTypeSlugs() {
   const rows = await prisma.seriesType.findMany({
-    where: { series: { some: { published: true } } },
+    where: { series: { some: { published: true, audio: { some: { published: true } } } } },
     select: { slug: true },
   });
   return rows.map((row) => row.slug);
 }
 
-/** Detail kitab + series published — untuk /kitab/[slug]. */
+/** Detail kitab + series published (dengan audio) — untuk /kitab/[slug]. */
 export const findPublishedSeriesTypeBySlug = cache(async (slug: string) => {
   return prisma.seriesType.findFirst({
-    where: { slug, series: { some: { published: true } } },
+    where: { slug, series: { some: { published: true, audio: { some: { published: true } } } } },
     include: {
       series: {
-        where: { published: true },
+        where: { published: true, audio: { some: { published: true } } },
         include: seriesPublicInclude,
         orderBy: { createdAt: "desc" },
       },

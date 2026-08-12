@@ -47,7 +47,7 @@ export async function listPublishedSeries(opts: {
   tagId?: string;
   sort?: "newest" | "oldest" | "title" | "title_desc" | "duration_asc" | "duration_desc" | "most_audio";
 }) {
-  const where: Prisma.SeriesWhereInput = { published: true };
+  const where: Prisma.SeriesWhereInput = { published: true, audio: { some: { published: true } } };
 
   if (opts.q) {
     const q = opts.q.trim();
@@ -101,7 +101,7 @@ export async function listPublishedSeries(opts: {
 
 export async function listSeriesForExplore(limit: number) {
   return prisma.series.findMany({
-    where: { published: true },
+    where: { published: true, audio: { some: { published: true } } },
     include: seriesPublicInclude,
     orderBy: { createdAt: "desc" },
     take: limit,
@@ -127,6 +127,7 @@ export const findPublishedSeriesBySlug = cache(async (slug: string): Promise<Ser
 export function buildSeriesSearchWhere(q: string): Prisma.SeriesWhereInput {
   return {
     published: true,
+    audio: { some: { published: true } },
     OR: [
       { judul: { contains: q, mode: "insensitive" } },
       { slug: { contains: q, mode: "insensitive" } },
@@ -155,7 +156,9 @@ export async function searchPublishedSeries(opts: {
 
 export async function countPublishedSeries(q?: string) {
   return prisma.series.count({
-    where: q?.trim() ? buildSeriesSearchWhere(q.trim()) : { published: true },
+    where: q?.trim()
+      ? buildSeriesSearchWhere(q.trim())
+      : { published: true, audio: { some: { published: true } } },
   });
 }
 
@@ -168,6 +171,7 @@ export async function findRelatedSeries(opts: {
 }): Promise<SeriesPublic[]> {
   const where: Prisma.SeriesWhereInput = {
     published: true,
+    audio: { some: { published: true } },
     id: { not: opts.seriesId },
     OR: [
       opts.speakerIds.length > 0
