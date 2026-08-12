@@ -138,7 +138,7 @@ export async function fetchChannelPlaylists(channelId: string): Promise<ChannelP
 
   do {
     const qs = new URLSearchParams({
-      part: "snippet",
+      part: "snippet,contentDetails",
       channelId,
       maxResults: "50",
       key: apiKey,
