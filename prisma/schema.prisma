@@ -98,6 +98,12 @@ enum RelatedTargetType {
   EXTERNAL
 }
 
+// Target komentar publik (polimorfik).
+enum CommentTarget {
+  KITAB
+  SERIES
+}
+
 // ------------------------------------------------------------
 // USER
 // ------------------------------------------------------------
@@ -123,6 +129,7 @@ model User {
   bookmarks      Bookmark[]
   notes          Note[]
   favoriteSeries FavoriteSeries[]
+  comments       Comment[]
   sessions       Session[]
   accounts       Account[]
 
@@ -554,6 +561,29 @@ model Note {
   @@index([userId, audioId])
   @@index([userId, updatedAt])
   @@map("notes")
+}
+
+// ------------------------------------------------------------
+// COMMENT (komentar publik untuk pengunjung)
+// Polimorfik: targetType + targetId menunjuk SeriesType (kitab)
+// atau Series TANPA FK. Bisa dari user login maupun anonim
+// (nama wajib diisi pengunjung yang tidak login).
+// ------------------------------------------------------------
+
+model Comment {
+  id         String        @id @default(cuid())
+  targetType CommentTarget
+  targetId   String
+  userId     String? // null = pengunjung anonim
+  nama       String // nama tampilan (user login: nama akun; anonim: input pengunjung)
+  content    String
+  ipHash     String? // untuk rate limit / anti-spam
+  createdAt  DateTime      @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([targetType, targetId, createdAt])
+  @@map("comments")
 }
 
 // ------------------------------------------------------------

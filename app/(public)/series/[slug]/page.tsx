@@ -28,6 +28,7 @@ import { SeriesSessionList } from "@/components/shared/series-session-list";
 import { SeriesPlayButton, SeriesProgressCard } from "@/components/shared/series-progress";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FavoriteButton } from "@/features/favorite/favorite-button";
+import { CommentSection } from "@/features/comment/components/comment-section";
 
 export const revalidate = 60;
 export const dynamicParams = true;
@@ -249,6 +250,8 @@ export default async function SeriesDetailPage({ params }: { params: Promise<{ s
             />
           )}
         </section>
+
+        <CommentSection targetType="SERIES" targetId={series.id} />
 
         {relatedSeries.length > 0 && (
           <section className="flex flex-col gap-6">

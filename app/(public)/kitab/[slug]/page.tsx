@@ -8,6 +8,7 @@ import { Heading, Text } from "@/components/ui/typography";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { SeriesCard } from "@/components/shared/series-card";
+import { CommentSection } from "@/features/comment/components/comment-section";
 
 export const revalidate = 60;
 export const dynamicParams = true;
@@ -89,6 +90,8 @@ export default async function KitabDetailPage({ params }: { params: Promise<{ sl
           <EmptyState title="Belum ada series" description="Belum ada series pada kitab ini." />
         )}
       </section>
+
+      <CommentSection targetType="KITAB" targetId={kitab.id} />
     </Container>
   );
 }

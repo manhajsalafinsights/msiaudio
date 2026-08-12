@@ -18,6 +18,7 @@ import {
   Settings,
   Menu,
   X,
+  MessageSquare,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { site } from "@/lib/config/site";
@@ -40,6 +41,7 @@ const adminNav: AdminNavItem[] = [
   { label: "Tag", href: "/admin/tag", icon: Tags },
   { label: "Media", href: "/admin/media", icon: ImageIcon },
   { label: "Pengguna", href: "/admin/pengguna", icon: Users },
+  { label: "Komentar", href: "/admin/komentar", icon: MessageSquare },
   { label: "Pengaturan", href: "/admin/pengaturan", icon: Settings },
 ];
 

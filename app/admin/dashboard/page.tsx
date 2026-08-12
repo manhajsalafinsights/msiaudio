@@ -5,13 +5,13 @@ import { StatCard } from "@/components/admin/stat-card";
 import { RecentActivity } from "@/components/admin/recent-activity";
 import { QuickActions } from "@/components/admin/quick-actions";
 import { formatDurationHuman } from "@/utils/duration";
-import { Mic, BookOpen, Library, ListMusic, FolderTree, Tags } from "lucide-react";
+import { Mic, BookOpen, Library, ListMusic, FolderTree, Tags, MessageSquare } from "lucide-react";
 
 export const revalidate = 0;
 
 async function getStats() {
   const [
-    ustadz, kitab, series, audio, kategori, tag,
+    ustadz, kitab, series, audio, kategori, tag, komentar,
     ustadzAktif, seriesTerbit, audioTerbit, durasi,
   ] = await Promise.all([
     prisma.speaker.count(),
@@ -20,6 +20,7 @@ async function getStats() {
     prisma.audio.count(),
     prisma.category.count(),
     prisma.tag.count(),
+    prisma.comment.count(),
     prisma.speaker.count({ where: { status: "ACTIVE" } }),
     prisma.series.count({ where: { published: true } }),
     prisma.audio.count({ where: { published: true } }),
@@ -27,7 +28,7 @@ async function getStats() {
   ]);
 
   return {
-    ustadz, kitab, series, audio, kategori, tag,
+    ustadz, kitab, series, audio, kategori, tag, komentar,
     ustadzAktif, seriesTerbit, audioTerbit,
     totalDurasi: durasi._sum.durasi ?? 0,
   };
@@ -86,6 +87,13 @@ export default async function AdminDashboardPage() {
           sub="penanda pencarian"
           icon={<Tags className="h-5 w-5" />}
           href="/admin/tag"
+        />
+        <StatCard
+          title="Komentar"
+          value={stats.komentar}
+          sub="dari pengunjung"
+          icon={<MessageSquare className="h-5 w-5" />}
+          href="/admin/komentar"
         />
       </div>
 
