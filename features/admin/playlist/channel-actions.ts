@@ -30,7 +30,7 @@ export type ChannelPlaylistResult = {
 };
 
 const importChannelSchema = z.object({
-  playlistIds: z.array(z.string().min(1)).min(1, "Pilih minimal 1 playlist"),
+  playlistId: z.string().min(1, "Playlist ID wajib diisi"),
   seriesTypeId: z.string().min(1, "Pilih kitab / tipe series"),
   published: z.boolean(),
   cleanTitles: z.boolean(),
@@ -71,12 +71,16 @@ export async function previewChannel(url: string): Promise<ActionState<ChannelPr
 }
 
 /**
- * Import seluruh playlist terpilih sebagai SERIES BARU (judul series = judul playlist).
- * Video private/deleted & duplikat dilewati otomatis (dilaporkan per playlist).
+ * Import SATU playlist sebagai SERIES (judul series = judul playlist).
+ * Video private/deleted & duplikat dilewati otomatis.
+ *
+ * Dipanggil PER-PLAYLIST dari client supaya tidak melewati batas durasi
+ * function (Vercel Hobby ~10 detik): satu request = satu playlist, bila
+ * timeout hanya playlist itu yang gagal, sisanya tetap jalan.
  */
-export async function importChannelPlaylists(input: z.infer<typeof importChannelSchema>): Promise<
-  ActionState<ChannelPlaylistResult[]>
-> {
+export async function importSingleChannelPlaylist(
+  input: z.infer<typeof importChannelSchema>,
+): Promise<ActionState<ChannelPlaylistResult>> {
   try {
     await requireAdmin();
     const parsed = importChannelSchema.safeParse(input);
@@ -86,35 +90,26 @@ export async function importChannelPlaylists(input: z.infer<typeof importChannel
         error: { code: "VALIDATION_ERROR", message: parsed.error.issues[0]?.message ?? "Data tidak valid" },
       };
     }
-    const { playlistIds, seriesTypeId, published, cleanTitles } = parsed.data;
-    if (playlistIds.length > 500) {
-      return {
-        ok: false,
-        error: { code: "VALIDATION_ERROR", message: "Maksimal 500 playlist dalam sekali jalankan" },
-      };
-    }
+    const { playlistId, seriesTypeId, published, cleanTitles } = parsed.data;
 
-    const results: ChannelPlaylistResult[] = [];
-    for (const playlistId of playlistIds) {
+    const result: ChannelPlaylistResult = await (async () => {
       const fetched = await fetchYouTubePlaylist(playlistId);
       if (!fetched.ok) {
-        results.push({
+        return {
           playlistId,
           playlistTitle: playlistId,
           ok: false,
           message: fetched.error.message,
-        });
-        continue;
+        };
       }
       const usable = fetched.items.filter((i) => !isUnavailableVideo(i.title));
       if (usable.length === 0) {
-        results.push({
+        return {
           playlistId,
           playlistTitle: fetched.playlistTitle || playlistId,
           ok: false,
           message: "Tidak ada video yang bisa diimpor (kosong / private)",
-        });
-        continue;
+        };
       }
 
       const importRes = await importPlaylistAsSeries({
@@ -126,16 +121,15 @@ export async function importChannelPlaylists(input: z.infer<typeof importChannel
         selectedVideoIds: usable.map((i) => i.videoId),
       });
       if (!importRes.ok) {
-        results.push({
+        return {
           playlistId,
           playlistTitle: fetched.playlistTitle || playlistId,
           ok: false,
           message: importRes.error.message,
-        });
-        continue;
+        };
       }
       const s: ImportSummary = importRes.data;
-      results.push({
+      return {
         playlistId,
         playlistTitle: s.seriesTitle,
         ok: true,
@@ -145,17 +139,17 @@ export async function importChannelPlaylists(input: z.infer<typeof importChannel
         skippedDuplicates: s.skippedDuplicates,
         skippedUnavailable: s.skippedUnavailable,
         action: s.action,
-      });
-    }
+      };
+    })();
 
     revalidatePath("/", "layout");
-    return { ok: true, data: results };
+    return { ok: true, data: result };
   } catch (error) {
     return {
       ok: false,
       error: {
         code: "UNKNOWN_ERROR",
-        message: error instanceof Error ? error.message : "Gagal mengimpor playlist channel",
+        message: error instanceof Error ? error.message : "Gagal mengimpor playlist",
       },
     };
   }

@@ -20,7 +20,7 @@ import { Select } from "@/components/ui/select";
 import { cn } from "@/utils/cn";
 import {
   previewChannel,
-  importChannelPlaylists,
+  importSingleChannelPlaylist,
   type ChannelPreview,
   type ChannelPlaylistResult,
 } from "@/features/admin/playlist/channel-actions";
@@ -38,6 +38,7 @@ export function ChannelImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[]
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [importing, startImport] = useTransition();
+  const [importingTitle, setImportingTitle] = useState<string | null>(null);
 
   const loadChannel = () => {
     setError(null);
@@ -74,20 +75,34 @@ export function ChannelImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[]
   const selectNone = () => setSelected(new Set());
 
   const handleImport = () => {
+    if (!preview) return;
     setError(null);
     setResults(null);
+    const targets = preview.playlists.filter((p) => selected.has(p.id));
     startImport(async () => {
-      const res = await importChannelPlaylists({
-        playlistIds: [...selected],
-        seriesTypeId,
-        published,
-        cleanTitles,
-      });
-      if (!res.ok) {
-        setError(res.error.message);
-        return;
+      const acc: ChannelPlaylistResult[] = [];
+      for (let i = 0; i < targets.length; i++) {
+        const target = targets[i];
+        setImportingTitle(`${i + 1}/${targets.length} · ${target.title}`);
+        const res = await importSingleChannelPlaylist({
+          playlistId: target.id,
+          seriesTypeId,
+          published,
+          cleanTitles,
+        });
+        if (res.ok) {
+          acc.push(res.data);
+        } else {
+          acc.push({
+            playlistId: target.id,
+            playlistTitle: target.title,
+            ok: false,
+            message: res.error.message,
+          });
+        }
+        setResults([...acc]);
       }
-      setResults(res.data);
+      setImportingTitle(null);
     });
   };
 
@@ -155,10 +170,10 @@ export function ChannelImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[]
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={selectAll}>
+                <Button variant="ghost" size="sm" onClick={selectAll} disabled={importing}>
                   Pilih Semua
                 </Button>
-                <Button variant="ghost" size="sm" onClick={selectNone}>
+                <Button variant="ghost" size="sm" onClick={selectNone} disabled={importing}>
                   Batal Semua
                 </Button>
               </div>
@@ -174,6 +189,7 @@ export function ChannelImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[]
                     role="checkbox"
                     aria-checked={active}
                     onClick={() => toggle(p.id)}
+                    disabled={importing}
                     className={cn(
                       "flex items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors",
                       active ? "border-brand/40 bg-brand/10" : "border-border bg-surface",
@@ -271,11 +287,23 @@ export function ChannelImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[]
 
       {results && (
         <div className="card card-msi flex flex-col gap-4 p-5">
+          {importing && (
+            <div className="flex items-center gap-3 rounded-lg border border-brand/30 bg-brand/10 px-4 py-3 text-sm">
+              <Loader2 className="h-4 w-4 animate-spin text-brand" aria-hidden />
+              <span>
+                Mengimpor <strong className="text-foreground">{importingTitle}</strong> — proses
+                per playlist, halaman aman ditutup; playlist yang sudah selesai tetap tersimpan.
+              </span>
+            </div>
+          )}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-base font-bold">Import selesai</h2>
+              <h2 className="text-base font-bold">
+                {importing ? "Sedang import..." : "Import selesai"}
+              </h2>
               <p className="mt-0.5 text-sm text-muted">
                 {doneCount} playlist berhasil · {failCount} gagal
+                {importing && ` · ${results.length}/${results.length + (preview?.playlists.filter((p) => selected.has(p.id)).length ?? 0) - results.length} selesai`}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
