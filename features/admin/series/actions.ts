@@ -146,6 +146,30 @@ export async function bulkSeriesStatus(ids: string[], published: boolean): Promi
   }
 }
 
+export async function updateSeriesType(seriesId: string, seriesTypeId: string): Promise<ActionState> {
+  try {
+    await requireAdmin();
+    if (!seriesId || !seriesTypeId) {
+      return { ok: false, error: { code: "VALIDATION_ERROR", message: "Data tidak valid" } };
+    }
+    const type = await prisma.seriesType.findUnique({ where: { id: seriesTypeId } });
+    if (!type) {
+      return { ok: false, error: { code: "VALIDATION_ERROR", message: "Tipe series tidak ditemukan" } };
+    }
+    await prisma.series.update({
+      where: { id: seriesId },
+      data: { seriesTypeId },
+    });
+    revalidatePublic();
+    return { ok: true, data: undefined };
+  } catch (error) {
+    return {
+      ok: false,
+      error: { code: "UNKNOWN_ERROR", message: error instanceof Error ? error.message : "Gagal mengubah tipe series" },
+    };
+  }
+}
+
 export async function bulkDeleteSeries(ids: string[]): Promise<ActionState> {
   try {
     await requireAdmin();

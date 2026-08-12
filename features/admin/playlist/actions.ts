@@ -11,6 +11,7 @@ import { seriesSlugExists, recalcSeriesTotals } from "@/repositories/series-repo
 import { audioSlugExists } from "@/repositories/audio-repository";
 import { extractPlaylistId, fetchYouTubePlaylist } from "@/utils/youtube-playlist";
 import { isUnavailableVideo } from "@/features/admin/playlist/video-utils";
+import { suggestSeriesTypeSlug } from "@/features/admin/lib/series-type-detect";
 
 function revalidatePublic() {
   revalidatePath("/", "layout");
@@ -73,25 +74,12 @@ const confirmSchema = z
     }
   });
 
-// Kata kunci deteksi tipe series dari judul (urutan = prioritas, spesifik dulu).
-const TYPE_KEYWORDS: { slug: string; keywords: string[] }[] = [
-  { slug: "kitab-bahasa-arab", keywords: ["bahasa arab", "kitab arab"] },
-  { slug: "kitab-muslimah", keywords: ["kitab muslimah"] },
-  { slug: "tematik", keywords: ["tematik"] },
-  { slug: "kajian-kitab", keywords: ["kajian kitab", "kitab"] },
-];
-
-/** Deteksi otomatis tipe series dari judul (kitab / tematik), null bila tak cocok. */
+// Deteksi otomatis tipe series dari judul (kitab / tematik), null bila tak cocok.
 async function detectSeriesTypeId(title: string): Promise<string | null> {
-  const lower = title.toLowerCase();
-  const types = await prisma.seriesType.findMany({ select: { id: true, slug: true } });
-  const bySlug = new Map(types.map((t) => [t.slug, t.id]));
-  for (const rule of TYPE_KEYWORDS) {
-    if (rule.keywords.some((k) => lower.includes(k))) {
-      return bySlug.get(rule.slug) ?? null;
-    }
-  }
-  return null;
+  const slug = suggestSeriesTypeSlug(title);
+  if (!slug) return null;
+  const type = await prisma.seriesType.findUnique({ where: { slug }, select: { id: true } });
+  return type?.id ?? null;
 }
 
 /** Ambil daftar video playlist untuk preview + tandai video yang sudah dipakai. */
