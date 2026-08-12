@@ -47,6 +47,7 @@ export function PlaylistImport({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [mode, setMode] = useState<"new" | "existing">("new");
   const [seriesTypeId, setSeriesTypeId] = useState("");
+  const [autoDetectType, setAutoDetectType] = useState(true);
   const [targetSeriesId, setTargetSeriesId] = useState("");
   const [published, setPublished] = useState(false);
   const [cleanTitles, setCleanTitles] = useState(true);
@@ -108,8 +109,8 @@ export function PlaylistImport({
       const res = await importPlaylistAsSeries({
         playlistUrl: url,
         mode,
-        seriesTypeId: mode === "new" && seriesTypeId !== "__auto__" ? seriesTypeId : undefined,
-        autoDetectType: mode === "new" && seriesTypeId === "__auto__",
+        seriesTypeId: mode === "new" ? seriesTypeId : undefined,
+        autoDetectType: mode === "new" && autoDetectType,
         targetSeriesId: mode === "existing" ? targetSeriesId : undefined,
         published,
         cleanTitles,
@@ -403,7 +404,6 @@ export function PlaylistImport({
                     invalid={!seriesTypeId}
                   >
                     <option value="">Pilih kitab...</option>
-                    <option value="__auto__">Otomatis — deteksi dari judul (kitab/tematik)</option>
                     {seriesTypes.map((st) => (
                       <option key={st.id} value={st.id}>
                         {st.nama}
@@ -451,6 +451,16 @@ export function PlaylistImport({
               )}
 
               <div className="flex items-end gap-3">
+                {mode === "new" && (
+                  <Button
+                    variant={autoDetectType ? "primary" : "outline"}
+                    onClick={() => setAutoDetectType((v) => !v)}
+                    title="Deteksi tipe dari judul playlist; judul tanpa kata kunci masuk Tematik"
+                  >
+                    <Wand2 className="h-4 w-4" aria-hidden />
+                    Deteksi Tipe Otomatis {autoDetectType && "ON"}
+                  </Button>
+                )}
                 <Button
                   variant={cleanTitles ? "primary" : "outline"}
                   onClick={() => setCleanTitles((v) => !v)}
@@ -482,7 +492,7 @@ export function PlaylistImport({
                 disabled={
                   importing ||
                   selectedCount === 0 ||
-                  (mode === "new" ? !seriesTypeId : !targetSeriesId)
+                  (mode === "new" ? seriesTypeId === "" && !autoDetectType : !targetSeriesId)
                 }
                 onClick={handleImport}
               >

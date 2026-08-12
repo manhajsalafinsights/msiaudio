@@ -74,10 +74,9 @@ const confirmSchema = z
     }
   });
 
-// Deteksi otomatis tipe series dari judul (kitab / tematik), null bila tak cocok.
+// Deteksi otomatis tipe series dari judul; bila tidak cocok → Tematik (default).
 async function detectSeriesTypeId(title: string): Promise<string | null> {
-  const slug = suggestSeriesTypeSlug(title);
-  if (!slug) return null;
+  const slug = suggestSeriesTypeSlug(title) ?? "tematik";
   const type = await prisma.seriesType.findUnique({ where: { slug }, select: { id: true } });
   return type?.id ?? null;
 }
@@ -321,8 +320,9 @@ export async function importPlaylistAsSeries(
       }
 
       if (action === "created") {
+        // Deteksi otomatis: kata kunci cocok → tipe itu; tidak cocok → Tematik.
         let typeId = data.seriesTypeId;
-        if (!typeId && data.autoDetectType) {
+        if (data.autoDetectType) {
           typeId = (await detectSeriesTypeId(seriesTitle)) ?? undefined;
         }
         if (!typeId) {
@@ -330,8 +330,7 @@ export async function importPlaylistAsSeries(
             ok: false,
             error: {
               code: "VALIDATION_ERROR",
-              message:
-                "Tidak dapat mendeteksi tipe series dari judul (kitab/tematik) — pilih tipe secara manual",
+              message: "Pilih kitab/tipe series atau aktifkan deteksi otomatis",
             },
           };
         }

@@ -24,6 +24,7 @@ import {
   type ChannelPreview,
   type ChannelPlaylistResult,
 } from "@/features/admin/playlist/channel-actions";
+import { suggestSeriesTypeSlug } from "@/features/admin/lib/series-type-detect";
 
 type SeriesTypeOption = { id: string; nama: string; slug: string };
 
@@ -32,6 +33,7 @@ export function ChannelImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[]
   const [preview, setPreview] = useState<ChannelPreview | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [seriesTypeId, setSeriesTypeId] = useState("");
+  const [autoDetect, setAutoDetect] = useState(true);
   const [published, setPublished] = useState(false);
   const [cleanTitles, setCleanTitles] = useState(true);
   const [results, setResults] = useState<ChannelPlaylistResult[] | null>(null);
@@ -78,7 +80,6 @@ export function ChannelImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[]
     if (!preview) return;
     setError(null);
     setResults(null);
-    const autoDetect = seriesTypeId === "__auto__";
     const targets = preview.playlists.filter((p) => selected.has(p.id));
     startImport(async () => {
       const acc: ChannelPlaylistResult[] = [];
@@ -87,7 +88,7 @@ export function ChannelImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[]
         setImportingTitle(`${i + 1}/${targets.length} · ${target.title}`);
         const res = await importSingleChannelPlaylist({
           playlistId: target.id,
-          seriesTypeId: autoDetect ? undefined : seriesTypeId,
+          seriesTypeId,
           autoDetectType: autoDetect,
           published,
           cleanTitles,
@@ -209,6 +210,17 @@ export function ChannelImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[]
                     <span className="shrink-0 text-xs text-muted">
                       {p.itemCount.toLocaleString("id-ID")} video
                     </span>
+                    {autoDetect &&
+                      (() => {
+                        const s = seriesTypes.find(
+                          (t) => t.slug === (suggestSeriesTypeSlug(p.title) ?? "tematik"),
+                        );
+                        return s ? (
+                          <span className="shrink-0 rounded bg-brand/15 px-1.5 py-0.5 text-[10px] font-medium text-brand">
+                            → {s.nama}
+                          </span>
+                        ) : null;
+                      })()}
                     <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted">
                       Playlist
                     </span>
@@ -223,27 +235,36 @@ export function ChannelImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[]
 
             <div>
               <label htmlFor="channel-series-type" className="mb-1.5 block text-sm font-medium">
-                Kitab / Tipe Series {seriesTypeId === "__auto__" && "(deteksi otomatis)"}
+                Kitab / Tipe Series
               </label>
-              <Select
-                id="channel-series-type"
-                value={seriesTypeId}
-                onChange={(e) => setSeriesTypeId(e.target.value)}
-                invalid={!seriesTypeId}
-              >
-                <option value="">Pilih kitab...</option>
-                <option value="__auto__">Otomatis — deteksi dari judul (kitab/tematik)</option>
-                {seriesTypes.map((st) => (
-                  <option key={st.id} value={st.id}>
-                    {st.nama}
-                  </option>
-                ))}
-              </Select>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <Select
+                  id="channel-series-type"
+                  value={seriesTypeId}
+                  onChange={(e) => setSeriesTypeId(e.target.value)}
+                  invalid={!seriesTypeId && !autoDetect}
+                  className="sm:max-w-xs"
+                >
+                  <option value="">Pilih kitab...</option>
+                  {seriesTypes.map((st) => (
+                    <option key={st.id} value={st.id}>
+                      {st.nama}
+                    </option>
+                  ))}
+                </Select>
+                <Button
+                  variant={autoDetect ? "primary" : "outline"}
+                  onClick={() => setAutoDetect((v) => !v)}
+                  title="Deteksi tipe dari judul playlist; bila tidak cocok, gunakan pilihan di atas sebagai fallback"
+                >
+                  <Wand2 className="h-4 w-4" aria-hidden />
+                  Deteksi Otomatis {autoDetect && "ON"}
+                </Button>
+              </div>
               <p className="mt-1.5 text-xs text-muted">
-                Otomatis: judul mengandung &quot;kitab bahasa arab&quot; → Kitab Bahasa Arab,
-                &quot;kitab muslimah&quot; → Kitab Muslimah, &quot;tematik&quot; → Tematik,
-                &quot;kitab&quot; → Kajian Kitab. Bila tidak cocok, playlist itu gagal &
-                dilaporkan — import ulang dengan pilihan manual.
+                Deteksi otomatis aktif: judul yang cocok (kitab, quran, tafsir, muslimah, dsb.)
+                masuk tipe yang sesuai; judul tanpa kata kunci otomatis masuk{" "}
+                <strong className="text-foreground">Tematik</strong>.
               </p>
             </div>
 
@@ -276,7 +297,7 @@ export function ChannelImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[]
               </p>
               <Button
                 size="lg"
-                disabled={importing || selectedPlaylists.length === 0 || !seriesTypeId}
+                disabled={importing || selectedPlaylists.length === 0 || (!seriesTypeId && !autoDetect)}
                 onClick={handleImport}
               >
                 {importing ? (
