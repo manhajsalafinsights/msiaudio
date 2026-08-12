@@ -10,6 +10,7 @@ import { uniqueSlug } from "@/features/admin/lib/slug";
 import { seriesSlugExists, recalcSeriesTotals } from "@/repositories/series-repository";
 import { audioSlugExists } from "@/repositories/audio-repository";
 import { extractPlaylistId, fetchYouTubePlaylist } from "@/utils/youtube-playlist";
+import { isUnavailableVideo } from "@/features/admin/playlist/video-utils";
 
 function revalidatePublic() {
   revalidatePath("/", "layout");
@@ -41,11 +42,6 @@ export type ImportSummary = {
   skippedUnavailable: number;
   skippedSesiConflict: number;
 };
-
-/** Deteksi video yang tidak tersedia (judul standar YouTube Data API). */
-function isUnavailableVideo(title: string): boolean {
-  return /^(?:private|deleted) video$/i.test(title.trim());
-}
 
 const confirmSchema = z
   .object({

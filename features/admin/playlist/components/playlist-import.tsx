@@ -25,6 +25,7 @@ import {
   type PlaylistPreview,
   type ImportSummary,
 } from "@/features/admin/playlist/actions";
+import { ChannelImport } from "@/features/admin/playlist/components/channel-import";
 
 type SeriesTypeOption = { id: string; nama: string; slug: string };
 type SeriesOption = {
@@ -41,6 +42,7 @@ export function PlaylistImport({
   seriesOptions: SeriesOption[];
 }) {
   const [url, setUrl] = useState("");
+  const [view, setView] = useState<"playlist" | "channel">("playlist");
   const [preview, setPreview] = useState<PlaylistPreview | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [mode, setMode] = useState<"new" | "existing">("new");
@@ -176,6 +178,37 @@ export function PlaylistImport({
 
   return (
     <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <button
+          type="button"
+          onClick={() => setView("playlist")}
+          className={cn(
+            "flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+            view === "playlist"
+              ? "border-brand bg-brand/10 text-brand"
+              : "border-border bg-surface text-muted hover:text-foreground",
+          )}
+        >
+          Import Playlist
+        </button>
+        <button
+          type="button"
+          onClick={() => setView("channel")}
+          className={cn(
+            "flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+            view === "channel"
+              ? "border-brand bg-brand/10 text-brand"
+              : "border-border bg-surface text-muted hover:text-foreground",
+          )}
+        >
+          Import Channel (Semua Playlist)
+        </button>
+      </div>
+
+      {view === "channel" ? (
+        <ChannelImport seriesTypes={seriesTypes} />
+      ) : (
+        <>
       <div className="card card-msi flex flex-col gap-4 p-5">
         <label htmlFor="playlist-url" className="text-sm font-medium">
           URL atau ID Playlist YouTube
@@ -451,6 +484,8 @@ export function PlaylistImport({
               </Button>
             </div>
           </div>
+        </>
+      )}
         </>
       )}
     </div>
