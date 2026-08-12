@@ -41,6 +41,8 @@ export type ImportSummary = {
   skippedDuplicates: number;
   skippedUnavailable: number;
   skippedSesiConflict: number;
+  /** created = series baru; merged = ditambahkan ke series berjudul sama; skipped = semua sudah ada. */
+  action: "created" | "merged" | "skipped";
 };
 
 const confirmSchema = z
@@ -221,20 +223,12 @@ export async function importPlaylistAsSeries(
       audioRows.push({ item: p.item, judul: p.judul, slug });
     }
 
-    if (data.mode === "new" && audioRows.length === 0) {
-      return {
-        ok: false,
-        error: {
-          code: "ALL_DUPLICATES",
-          message: "Semua video sudah pernah diimpor (duplikat) — series tidak dibuat.",
-        },
-      };
-    }
-
     // Target series: mode "existing" menambahkan ke series yang dipilih;
-    // mode "new" selalu membuat series baru (judul = judul playlist).
-    let series: { id: string; judul: string; slug: string };
+    // mode "new" biasanya membuat series baru (judul = judul playlist),
+    // KECUALI sudah ada series berjudul sama → di-merge / di-skip.
+    let series: { id: string; judul: string; slug: string } | null = null;
     let baseNomorSesi = 0;
+    let action: ImportSummary["action"] = "created";
 
     if (data.mode === "existing") {
       const target = await prisma.series.findUnique({
@@ -254,28 +248,98 @@ export async function importPlaylistAsSeries(
       });
       baseNomorSesi = agg._max.nomorSesi ?? 0;
     } else {
-      const seriesType = await prisma.seriesType.findUnique({
-        where: { id: data.seriesTypeId },
-        select: { id: true, slug: true },
+      const seriesTitle = result.playlistTitle || "Playlist";
+
+      // Cek series berjudul sama: jangan bikin duplikat.
+      const sameTitle = await prisma.series.findFirst({
+        where: { judul: seriesTitle },
+        select: {
+          id: true,
+          judul: true,
+          slug: true,
+          audio: {
+            select: {
+              mediaSources: { where: { provider: "YOUTUBE" }, select: { providerId: true } },
+            },
+          },
+        },
       });
-      if (!seriesType) {
+      if (sameTitle) {
+        const existingVideoIds = new Set(
+          sameTitle.audio.flatMap((a) => a.mediaSources.map((m) => m.providerId)),
+        );
+        const overlap = items.filter((i) => existingVideoIds.has(i.videoId)).length;
+        const missingCount = items.length - overlap;
+
+        if (missingCount === 0) {
+          // Semua video sudah ada di series berjudul sama → skip, jangan duplikat.
+          return {
+            ok: true,
+            data: {
+              seriesId: sameTitle.id,
+              seriesSlug: sameTitle.slug,
+              seriesTitle: sameTitle.judul,
+              imported: 0,
+              skippedDuplicates: items.length,
+              skippedUnavailable,
+              skippedSesiConflict,
+              action: "skipped",
+            },
+          };
+        }
+        if (overlap > 0 || sameTitle.audio.length === 0) {
+          // Series sama (atau kosong): tambahkan video yang belum ada ke series itu.
+          series = { id: sameTitle.id, judul: sameTitle.judul, slug: sameTitle.slug };
+          const agg = await prisma.audio.aggregate({
+            where: { seriesId: sameTitle.id },
+            _max: { nomorSesi: true },
+          });
+          baseNomorSesi = agg._max.nomorSesi ?? 0;
+          action = "merged";
+        }
+      }
+
+      // Lebih dulu untuk menghindari series kosong (semua duplikat global).
+      if (audioRows.length === 0) {
         return {
           ok: false,
-          error: { code: "VALIDATION_ERROR", message: "Kitab/tipe series tidak ditemukan" },
+          error: {
+            code: "ALL_DUPLICATES",
+            message: "Semua video sudah pernah diimpor (duplikat) — series tidak dibuat.",
+          },
         };
       }
 
-      const seriesTitle = result.playlistTitle || "Playlist";
-      const created = await prisma.series.create({
-        data: {
-          judul: seriesTitle,
-          slug: await uniqueSlug(slugify(seriesTitle), (s) => seriesSlugExists(s)),
-          cover: items[0]?.thumbnail ?? null,
-          seriesTypeId: data.seriesTypeId!,
-          published: data.published,
-        },
-      });
-      series = { id: created.id, judul: created.judul, slug: created.slug };
+      if (action === "created") {
+        const seriesType = await prisma.seriesType.findUnique({
+          where: { id: data.seriesTypeId },
+          select: { id: true, slug: true },
+        });
+        if (!seriesType) {
+          return {
+            ok: false,
+            error: { code: "VALIDATION_ERROR", message: "Kitab/tipe series tidak ditemukan" },
+          };
+        }
+
+        const created = await prisma.series.create({
+          data: {
+            judul: seriesTitle,
+            slug: await uniqueSlug(slugify(seriesTitle), (s) => seriesSlugExists(s)),
+            cover: items[0]?.thumbnail ?? null,
+            seriesTypeId: data.seriesTypeId!,
+            published: data.published,
+          },
+        });
+        series = { id: created.id, judul: created.judul, slug: created.slug };
+      }
+    }
+
+    if (!series) {
+      return {
+        ok: false,
+        error: { code: "UNKNOWN_ERROR", message: "Gagal menentukan series target" },
+      };
     }
 
     const CHUNK_SIZE = 200;
@@ -326,6 +390,7 @@ export async function importPlaylistAsSeries(
         skippedDuplicates,
         skippedUnavailable,
         skippedSesiConflict,
+        action,
       },
     };
   } catch (error) {

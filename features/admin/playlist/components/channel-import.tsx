@@ -306,9 +306,22 @@ export function ChannelImport({ seriesTypes }: { seriesTypes: SeriesTypeOption[]
                 <span className="min-w-0 flex-1 truncate font-medium">{r.playlistTitle}</span>
                 {r.ok ? (
                   <span className="shrink-0 text-xs text-muted">
-                    {r.imported?.toLocaleString("id-ID")} audio
-                    {(r.skippedDuplicates ?? 0) > 0 && ` · ${r.skippedDuplicates} duplikat`}
-                    {(r.skippedUnavailable ?? 0) > 0 && ` · ${r.skippedUnavailable} private`}
+                    {r.action === "skipped" ? (
+                      "sudah diimpor semua — dilewati"
+                    ) : r.action === "merged" ? (
+                      <>
+                        ditambahkan {r.imported?.toLocaleString("id-ID")} audio ke series yang
+                        sudah ada
+                        {(r.skippedDuplicates ?? 0) > 0 && ` · ${r.skippedDuplicates} duplikat`}
+                        {(r.skippedUnavailable ?? 0) > 0 && ` · ${r.skippedUnavailable} private`}
+                      </>
+                    ) : (
+                      <>
+                        {r.imported?.toLocaleString("id-ID")} audio
+                        {(r.skippedDuplicates ?? 0) > 0 && ` · ${r.skippedDuplicates} duplikat`}
+                        {(r.skippedUnavailable ?? 0) > 0 && ` · ${r.skippedUnavailable} private`}
+                      </>
+                    )}
                   </span>
                 ) : (
                   <span className="shrink-0 text-xs text-danger">{r.message}</span>

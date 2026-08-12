@@ -143,10 +143,19 @@ export function PlaylistImport({
         </span>
         <div>
           <h2 className="text-lg font-bold">Import selesai</h2>
-          <p className="mt-1 text-sm text-muted">
-            {summary.imported} audio diimpor ke series{" "}
-            <span className="font-medium text-foreground">{summary.seriesTitle}</span>.
-          </p>
+          {summary.action === "skipped" ? (
+            <p className="mt-1 text-sm text-muted">
+              Semua video sudah ada di series{" "}
+              <span className="font-medium text-foreground">{summary.seriesTitle}</span> — tidak
+              ada yang diimpor.
+            </p>
+          ) : (
+            <p className="mt-1 text-sm text-muted">
+              {summary.imported} audio diimpor ke series{" "}
+              <span className="font-medium text-foreground">{summary.seriesTitle}</span>
+              {summary.action === "merged" && " (series dengan judul yang sama sudah ada, audio ditambahkan ke series tersebut)"}.
+            </p>
+          )}
         </div>
         {(summary.skippedDuplicates > 0 ||
           summary.skippedUnavailable > 0 ||

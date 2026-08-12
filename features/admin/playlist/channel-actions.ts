@@ -26,6 +26,7 @@ export type ChannelPlaylistResult = {
   imported?: number;
   skippedDuplicates?: number;
   skippedUnavailable?: number;
+  action?: "created" | "merged" | "skipped";
 };
 
 const importChannelSchema = z.object({
@@ -143,6 +144,7 @@ export async function importChannelPlaylists(input: z.infer<typeof importChannel
         imported: s.imported,
         skippedDuplicates: s.skippedDuplicates,
         skippedUnavailable: s.skippedUnavailable,
+        action: s.action,
       });
     }
 
