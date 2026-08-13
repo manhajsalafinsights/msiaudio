@@ -285,42 +285,21 @@ async function TalkShowGrid() {
    Kategori — kartu ber-ikon dengan jumlah seri
    ================================================================ */
 
-const CATEGORY_PALETTE = [
-  "from-brand/25 via-brand/10 to-transparent",
-  "from-emerald-500/25 via-emerald-500/10 to-transparent",
-  "from-amber-500/25 via-amber-500/10 to-transparent",
-  "from-sky-500/25 via-sky-500/10 to-transparent",
-  "from-rose-500/25 via-rose-500/10 to-transparent",
-  "from-violet-500/25 via-violet-500/10 to-transparent",
-];
-
-const CATEGORY_ICONS: Record<string, LucideIcon> = {
-  fiqih: Scale,
-  adab: Sparkles,
-  hadits: ScrollText,
-  akhlak: HeartHandshake,
-  "al-quran": BookOpen,
-  aqidah: ShieldCheck,
-  tafsir: BookMarked,
-  sirah: Landmark,
-  tauhid: Star,
-};
-
 function CategoriesSection() {
   return (
     <Container className="py-4 sm:py-5">
-      <SectionHeader title="Kategori" moreHref="/explore" />
-      <CategoriesGrid />
+      <SectionHeader title="Kategori" />
+      <CategoriesChips />
     </Container>
   );
 }
 
-async function CategoriesGrid() {
+async function CategoriesChips() {
   const categories = await listPublishedCategories();
   if (categories.length === 0) return null;
   return (
-    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
-      {categories.slice(0, 8).map((category, index) => {
+    <div className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap">
+      {categories.slice(0, 8).map((category) => {
         const Icon = category.icon
           ? (CATEGORY_ICONS[category.icon] ?? CATEGORY_ICONS[category.slug] ?? FolderOpen)
           : (CATEGORY_ICONS[category.slug] ?? FolderOpen);
@@ -328,26 +307,23 @@ async function CategoriesGrid() {
           <Link
             key={category.id}
             href={`/kategori/${category.slug}`}
-            className={`group relative flex items-center gap-3 overflow-hidden rounded-2xl border border-border bg-gradient-to-br p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-brand/25 hover:shadow-lg hover:shadow-brand/5 sm:p-4 ${CATEGORY_PALETTE[index % CATEGORY_PALETTE.length]}`}
+            className="chip flex-none snap-start whitespace-nowrap transition-colors hover:border-brand/30 hover:bg-brand/5 hover:text-brand"
           >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand/12 text-brand transition-colors group-hover:bg-brand group-hover:text-white">
-              <Icon className="h-5 w-5" aria-hidden />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-semibold">{category.nama}</span>
-              <span className="text-xs text-muted">
-                {category.seriesCount > 0
-                  ? `${category.seriesCount} seri`
-                  : "Segera hadir"}
-              </span>
-            </span>
-            <ChevronRight
-              className="h-4 w-4 shrink-0 text-muted transition-all group-hover:translate-x-0.5 group-hover:text-brand"
-              aria-hidden
-            />
+            <Icon className="h-3.5 w-3.5 text-brand" aria-hidden />
+            {category.nama}
+            {category.seriesCount > 0 && (
+              <span className="text-muted">· {category.seriesCount}</span>
+            )}
           </Link>
         );
       })}
+      <Link
+        href="/explore"
+        className="chip flex-none snap-start whitespace-nowrap font-semibold text-brand transition-colors hover:bg-brand/10"
+      >
+        Lihat semua
+        <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+      </Link>
     </div>
   );
 }
