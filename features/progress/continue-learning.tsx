@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Play } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { formatDurationHuman } from "@/utils/duration";
-import { AudioDisc } from "@/components/shared/audio-disc";
+import { AudioBook } from "@/components/shared/audio-book";
 
 interface ContinueLearningItem {
   id: string;
@@ -74,7 +74,7 @@ function ContinueHero({ item }: { item: ContinueLearningItem }) {
 
       <div className="relative flex flex-row items-center gap-4 sm:gap-10">
         <div className="relative h-28 w-28 shrink-0 sm:h-52 sm:w-52">
-          <AudioDisc
+          <AudioBook
             src={item.series.cover}
             alt={item.series.judul}
             className="h-full w-full rounded-none"
@@ -133,7 +133,7 @@ function ContinueRow({ item }: { item: ContinueLearningItem }) {
         href={`/series/${item.series.slug}`}
         className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl"
       >
-        <AudioDisc
+        <AudioBook
           src={item.series.cover}
           alt={item.series.judul}
           hideBadge
