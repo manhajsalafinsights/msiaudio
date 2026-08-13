@@ -1,10 +1,24 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import {
+  BookOpen,
+  BookMarked,
+  ChevronRight,
+  FolderOpen,
+  HeartHandshake,
+  Landmark,
+  Scale,
+  ScrollText,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  type LucideIcon,
+} from "lucide-react";
 import { canonicalUrl } from "@/lib/seo";
 import { getRecentAudio } from "@/services/audio-service";
 import { getSeriesList } from "@/services/series-service";
-import { listCategories } from "@/repositories/category-repository";
+import { listPublishedCategories } from "@/repositories/category-repository";
 import {
   listPublishedSeriesTypes,
   findPublishedSeriesTypeBySlug,
@@ -268,8 +282,29 @@ async function TalkShowGrid() {
 }
 
 /* ================================================================
-   Kategori
+   Kategori — kartu ber-ikon dengan jumlah seri
    ================================================================ */
+
+const CATEGORY_PALETTE = [
+  "from-brand/25 via-brand/10 to-transparent",
+  "from-emerald-500/25 via-emerald-500/10 to-transparent",
+  "from-amber-500/25 via-amber-500/10 to-transparent",
+  "from-sky-500/25 via-sky-500/10 to-transparent",
+  "from-rose-500/25 via-rose-500/10 to-transparent",
+  "from-violet-500/25 via-violet-500/10 to-transparent",
+];
+
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  fiqih: Scale,
+  adab: Sparkles,
+  hadits: ScrollText,
+  akhlak: HeartHandshake,
+  "al-quran": BookOpen,
+  aqidah: ShieldCheck,
+  tafsir: BookMarked,
+  sirah: Landmark,
+  tauhid: Star,
+};
 
 function CategoriesSection() {
   return (
@@ -281,19 +316,38 @@ function CategoriesSection() {
 }
 
 async function CategoriesGrid() {
-  const categories = await listCategories();
+  const categories = await listPublishedCategories();
   if (categories.length === 0) return null;
   return (
-    <div className="flex flex-wrap gap-2">
-      {categories.map((category) => (
-        <Link
-          key={category.id}
-          href={`/kategori/${category.slug}`}
-          className="chip hover:border-brand/30 hover:bg-brand/5"
-        >
-          {category.nama}
-        </Link>
-      ))}
+    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
+      {categories.slice(0, 8).map((category, index) => {
+        const Icon = category.icon
+          ? (CATEGORY_ICONS[category.icon] ?? CATEGORY_ICONS[category.slug] ?? FolderOpen)
+          : (CATEGORY_ICONS[category.slug] ?? FolderOpen);
+        return (
+          <Link
+            key={category.id}
+            href={`/kategori/${category.slug}`}
+            className={`group relative flex items-center gap-3 overflow-hidden rounded-2xl border border-border bg-gradient-to-br p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-brand/25 hover:shadow-lg hover:shadow-brand/5 sm:p-4 ${CATEGORY_PALETTE[index % CATEGORY_PALETTE.length]}`}
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand/12 text-brand transition-colors group-hover:bg-brand group-hover:text-white">
+              <Icon className="h-5 w-5" aria-hidden />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-semibold">{category.nama}</span>
+              <span className="text-xs text-muted">
+                {category.seriesCount > 0
+                  ? `${category.seriesCount} seri`
+                  : "Segera hadir"}
+              </span>
+            </span>
+            <ChevronRight
+              className="h-4 w-4 shrink-0 text-muted transition-all group-hover:translate-x-0.5 group-hover:text-brand"
+              aria-hidden
+            />
+          </Link>
+        );
+      })}
     </div>
   );
 }
