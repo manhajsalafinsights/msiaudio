@@ -19,6 +19,12 @@ export type HistoryWithAudio = Prisma.ListeningHistoryGetPayload<{
   include: typeof historyInclude;
 }>;
 
+/** Jumlah pengguna yang pernah memutar audio (pendengar aktif). */
+export async function countListeners() {
+  const rows = await prisma.listeningHistory.groupBy({ by: ["userId"] });
+  return rows.length;
+}
+
 export async function getListeningState(userId: string, audioId: string) {
   return prisma.listeningHistory.findUnique({
     where: { userId_audioId: { userId, audioId } },

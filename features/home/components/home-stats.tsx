@@ -2,15 +2,9 @@ import { Suspense } from "react";
 import { Music, BookOpen, Headset, User } from "lucide-react";
 import { countPublishedAudio } from "@/repositories/audio-repository";
 import { countPublishedSeries } from "@/repositories/series-repository";
+import { countUsers } from "@/repositories/user-repository";
+import { countListeners } from "@/repositories/history-repository";
 import { formatCompactCount } from "@/utils/format";
-
-/** Angka "hidup" yang berubah tiap jam: naik di jam sibuk (malam), kecil di pagi. */
-function hourlyValue(base: number, amplitude: number, jitter: number) {
-  const hour = new Date().getHours();
-  const wave = Math.sin(((hour - 6) / 24) * Math.PI * 2);
-  const wobble = Math.sin(hour * 1.7 + 2) * jitter;
-  return Math.round(base + amplitude * (0.5 + 0.5 * wave) + wobble);
-}
 
 export default function HomeStats() {
   return (
@@ -21,16 +15,18 @@ export default function HomeStats() {
 }
 
 async function HomeStatsContent() {
-  const [audioCount, seriesCount] = await Promise.all([
+  const [audioCount, seriesCount, listenerCount, userCount] = await Promise.all([
     countPublishedAudio(),
     countPublishedSeries(),
+    countListeners(),
+    countUsers(),
   ]);
 
   const items = [
     { value: audioCount, label: "Kajian", icon: Music },
     { value: seriesCount, label: "Series", icon: BookOpen },
-    { value: hourlyValue(7000, 1400, 160), label: "Pendengar", icon: Headset },
-    { value: hourlyValue(985, 70, 21), label: "Pengguna", icon: User },
+    { value: listenerCount, label: "Pendengar", icon: Headset },
+    { value: userCount, label: "Pengguna", icon: User },
   ];
 
   return (
