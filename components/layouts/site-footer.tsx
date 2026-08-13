@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { Headphones } from "lucide-react";
-import { footerLinks, site } from "@/lib/config/site";
+import { site } from "@/lib/config/site";
 import { Container } from "@/components/ui/container";
+import { LegalLinks } from "@/components/layouts/legal-links";
 
 export function SiteFooter() {
   const year = new Date().getFullYear();
@@ -19,17 +19,7 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <nav aria-label="Tautan footer" className="flex flex-wrap gap-x-6 gap-y-2">
-          {footerLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-sm text-muted transition-colors hover:text-foreground"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+        <LegalLinks />
       </Container>
       <div className="border-t border-border">
         <Container className="py-4">
