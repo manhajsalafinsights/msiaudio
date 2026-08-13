@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import {
   BookOpen,
   BookMarked,
-  ChevronRight,
   FolderOpen,
   HeartHandshake,
   Landmark,
@@ -282,13 +281,24 @@ async function TalkShowGrid() {
 }
 
 /* ================================================================
-   Kategori — kartu ber-ikon dengan jumlah seri
+   Kategori — chip kecil yang bisa digeser
    ================================================================ */
+
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  fiqih: Scale,
+  adab: Sparkles,
+  hadits: ScrollText,
+  akhlak: HeartHandshake,
+  "al-quran": BookOpen,
+  aqidah: ShieldCheck,
+  tafsir: BookMarked,
+  sirah: Landmark,
+  tauhid: Star,
+};
 
 function CategoriesSection() {
   return (
-    <Container className="py-4 sm:py-5">
-      <SectionHeader title="Kategori" />
+    <Container className="pt-1 pb-4 sm:pb-5">
       <CategoriesChips />
     </Container>
   );
@@ -298,7 +308,7 @@ async function CategoriesChips() {
   const categories = await listPublishedCategories();
   if (categories.length === 0) return null;
   return (
-    <div className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap">
+    <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap">
       {categories.slice(0, 8).map((category) => {
         const Icon = category.icon
           ? (CATEGORY_ICONS[category.icon] ?? CATEGORY_ICONS[category.slug] ?? FolderOpen)
@@ -317,13 +327,6 @@ async function CategoriesChips() {
           </Link>
         );
       })}
-      <Link
-        href="/explore"
-        className="chip flex-none snap-start whitespace-nowrap font-semibold text-brand transition-colors hover:bg-brand/10"
-      >
-        Lihat semua
-        <ChevronRight className="h-3.5 w-3.5" aria-hidden />
-      </Link>
     </div>
   );
 }
