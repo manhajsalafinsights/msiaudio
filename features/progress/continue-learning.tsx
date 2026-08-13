@@ -6,6 +6,7 @@ import { Play } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { formatDurationHuman } from "@/utils/duration";
 import { AudioBook } from "@/components/shared/audio-book";
+import { AudioDisc } from "@/components/shared/audio-disc";
 
 interface ContinueLearningItem {
   id: string;
@@ -131,9 +132,9 @@ function ContinueRow({ item }: { item: ContinueLearningItem }) {
     <div className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-all hover:border-brand/20 hover:shadow-sm sm:gap-4">
       <Link
         href={`/series/${item.series.slug}`}
-        className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl"
+        className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl"
       >
-        <AudioBook
+        <AudioDisc
           src={item.series.cover}
           alt={item.series.judul}
           hideBadge
