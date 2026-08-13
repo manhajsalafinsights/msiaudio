@@ -31,6 +31,12 @@ export const aboutDoc: LegalDoc = {
       ],
     },
     {
+      heading: "Pengembang",
+      paragraphs: [
+        "MSI Audio dikembangkan oleh Tim YAIAPPS. Kunjungi https://yaiapps.vercel.app/ untuk mengenal karya dan layanan kami lainnya.",
+      ],
+    },
+    {
       heading: "Sifat Layanan",
       paragraphs: [
         "MSI Audio adalah layanan gratis. Kami berkomitmen menjaga kualitas dan kelengkapan materi, serta senantiasa menyempurnakan layanan ini. Informasi dalam layanan ini disajikan apa adanya dan dapat berubah sewaktu-waktu tanpa pemberitahuan terlebih dahulu.",

@@ -22,9 +22,20 @@ export function SiteFooter() {
         <LegalLinks />
       </Container>
       <div className="border-t border-border">
-        <Container className="py-4">
+        <Container className="flex flex-col items-start justify-between gap-2 py-4 sm:flex-row sm:items-center">
           <p className="text-xs text-muted">
             © {year} {site.name}. Hak cipta dilindungi.
+          </p>
+          <p className="text-xs text-muted">
+            Dikembangkan oleh{" "}
+            <a
+              href="https://yaiapps.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-brand transition-colors hover:underline"
+            >
+              Tim YAIAPPS
+            </a>
           </p>
         </Container>
       </div>
