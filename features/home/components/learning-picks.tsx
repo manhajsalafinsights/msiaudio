@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Play, BookOpen } from "lucide-react";
+import { Play } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { SectionHeader } from "@/components/shared/section-header";
-import { Cover } from "@/components/shared/cover";
+import { AudioBook } from "@/components/shared/audio-book";
 import { formatDuration } from "@/utils/duration";
 import { AutoRotatingList } from "@/features/home/components/auto-rotating-list";
 import { getPromoLearningAudios } from "@/services/audio-service";
@@ -23,7 +23,7 @@ function LearningPickCard({ pick }: { pick: LearningPick }) {
     <div className="group flex h-full flex-col gap-2.5 rounded-2xl p-1.5 transition-colors duration-200 hover:bg-black/[0.05] dark:hover:bg-white/[0.06]">
       <Link href={`/audio/${audio.slug}`} className="flex h-full flex-col gap-2.5">
         <span className="relative block aspect-[4/3] w-full overflow-hidden">
-          <Cover
+          <AudioBook
             src={audio.cover ?? audio.series?.cover}
             alt={audio.judul}
             className="h-full w-full rounded-none"
@@ -31,10 +31,6 @@ function LearningPickCard({ pick }: { pick: LearningPick }) {
 
           <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
             {label}
-          </span>
-
-          <span className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm">
-            <BookOpen className="h-3.5 w-3.5" aria-hidden />
           </span>
 
           <span className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-1 text-xs font-medium tabular-nums text-white backdrop-blur-sm">
