@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { Music, BookOpen, Headset, User } from "lucide-react";
 import { countPublishedAudio } from "@/repositories/audio-repository";
 import { countPublishedSeries } from "@/repositories/series-repository";
-import { formatNumber } from "@/utils/format";
+import { formatCompactCount } from "@/utils/format";
 
 /** Angka "hidup" yang berubah tiap jam: naik di jam sibuk (malam), kecil di pagi. */
 function hourlyValue(base: number, amplitude: number, jitter: number) {
@@ -43,7 +43,7 @@ async function HomeStatsContent() {
         >
           {i > 0 && <span className="mx-2.5 h-1 w-1 rounded-full bg-brand/30" aria-hidden />}
           <item.icon className="h-4 w-4 text-brand" aria-hidden />
-          <span className="text-sm font-bold text-foreground">{formatNumber(item.value)}</span>
+          <span className="text-sm font-bold text-foreground">{formatCompactCount(item.value)}</span>
         </span>
       ))}
     </div>
