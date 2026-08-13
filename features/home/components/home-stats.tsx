@@ -1,8 +1,7 @@
 import { Suspense } from "react";
-import { Music, BookOpen, MicVocal, Headset, User } from "lucide-react";
+import { Music, BookOpen, Headset, User } from "lucide-react";
 import { countPublishedAudio } from "@/repositories/audio-repository";
 import { countPublishedSeries } from "@/repositories/series-repository";
-import { countActiveSpeakers } from "@/repositories/speaker-repository";
 import { formatCompactCount } from "@/utils/format";
 
 /** Angka "hidup" yang berubah tiap jam: naik di jam sibuk (malam), kecil di pagi. */
@@ -22,16 +21,14 @@ export default function HomeStats() {
 }
 
 async function HomeStatsContent() {
-  const [audioCount, seriesCount, speakerCount] = await Promise.all([
+  const [audioCount, seriesCount] = await Promise.all([
     countPublishedAudio(),
     countPublishedSeries(),
-    countActiveSpeakers(),
   ]);
 
   const items = [
     { value: audioCount, label: "Kajian", icon: Music },
     { value: seriesCount, label: "Series", icon: BookOpen },
-    { value: speakerCount, label: "Pemateri", icon: MicVocal },
     { value: hourlyValue(7000, 1400, 160), label: "Pendengar", icon: Headset },
     { value: hourlyValue(985, 70, 21), label: "Pengguna", icon: User },
   ];
