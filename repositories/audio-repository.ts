@@ -91,14 +91,41 @@ export async function listPublishedAudioQueueBySeries(seriesId: string) {
   });
 }
 
-/** Audio published terbaru lintas series (Home → "Kajian Terbaru"). */
+/** Audio published terbaru lintas series (Home → "Kajian Terbaru").
+ *  Dicampur antar ustadz (round-robin) supaya hasilnya tidak didominasi
+ *  satu ustadz yang baru saja diimpor playlist-nya. */
 export async function listRecentPublishedAudio(limit: number) {
-  return prisma.audio.findMany({
+  const rows = await prisma.audio.findMany({
     where: { published: true },
     include: audioCardInclude,
     orderBy: { createdAt: "desc" },
-    take: limit,
+    take: limit * 4,
   });
+
+  // Kelompokkan per ustadz (urutan bucket = kebaruan ustadz pertama muncul).
+  const buckets = new Map<string, AudioCard[]>();
+  for (const audio of rows) {
+    const key = audio.series.speakers[0]?.speaker.id ?? "tanpa-ustadz";
+    const list = buckets.get(key) ?? [];
+    list.push(audio);
+    buckets.set(key, list);
+  }
+
+  // Ambil bergantian satu-satu dari tiap ustadz sampai limit terpenuhi.
+  const keys = [...buckets.keys()];
+  const mixed: AudioCard[] = [];
+  let progressed = true;
+  while (mixed.length < limit && progressed) {
+    progressed = false;
+    for (const key of keys) {
+      const list = buckets.get(key);
+      if (!list || list.length === 0) continue;
+      mixed.push(list.shift() as AudioCard);
+      progressed = true;
+      if (mixed.length >= limit) break;
+    }
+  }
+  return mixed;
 }
 
 /** Satu audio published terbaru dari series dengan series-type tertentu (untuk promosi konten). */
