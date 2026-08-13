@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Pencil, Trash2, Eye, EyeOff, Video, Rocket } from "lucide-react";
+import { Pencil, Trash2, Eye, EyeOff, Video, Rocket, RefreshCw } from "lucide-react";
+import type { ActionState } from "@/types/action";
 import {
   Table,
   TableHeader,
@@ -27,6 +28,7 @@ import {
   bulkAudioStatus,
   bulkDeleteAudio,
   publishAllDrafts,
+  syncYoutubeViews,
 } from "@/features/admin/audio/actions";
 
 interface AudioRow {
@@ -72,7 +74,21 @@ export function AudioTable({
   const { pending, error, run } = useAdminAction(() => router.refresh());
   const [deleteTarget, setDeleteTarget] = useState<AudioRow | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
   const { selected, toggleRow, toggleAll, clear, allSelected } = useRowSelection(rows);
+
+  const handleSyncViews = () => {
+    setSyncMsg(null);
+    run(async () => {
+      const res = await syncYoutubeViews();
+      if (res.ok) {
+        setSyncMsg(
+          `Sync view YouTube selesai: ${res.data.updated} diperbarui, ${res.data.failed} gagal.`,
+        );
+      }
+      return res as ActionState;
+    });
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -127,6 +143,23 @@ export function AudioTable({
               <Rocket className="h-4 w-4" />
               Publish Semua Draft ({draftCount})
             </Button>
+          )}
+
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={pending}
+            onClick={handleSyncViews}
+            title="Ambil view/like terbaru dari YouTube (Data API, 1 unit/video)"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Sync View YouTube
+          </Button>
+
+          {syncMsg && (
+            <span className="text-xs font-medium text-success" role="status">
+              {syncMsg}
+            </span>
           )}
 
           {selected.length > 0 && (

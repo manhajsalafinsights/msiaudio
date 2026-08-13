@@ -6,6 +6,14 @@ export async function POST(request: Request) {
   const kind = body?.kind;
   const slug = typeof body?.slug === "string" && body.slug.length > 0 ? body.slug : null;
 
+  if (kind === "audio" && slug) {
+    await prisma.audio.updateMany({
+      where: { slug, published: true },
+      data: { viewCount: { increment: 1 } },
+    });
+    return NextResponse.json({ ok: true });
+  }
+
   if (kind === "series" && slug) {
     await prisma.series.updateMany({
       where: { slug, published: true },

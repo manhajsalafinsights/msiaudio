@@ -10,6 +10,7 @@ import { uniqueSlug } from "@/features/admin/lib/slug";
 import { seriesSlugExists, recalcSeriesTotals } from "@/repositories/series-repository";
 import { audioSlugExists } from "@/repositories/audio-repository";
 import { extractPlaylistId, fetchYouTubePlaylist } from "@/utils/youtube-playlist";
+import { fetchYoutubeVideoStats, withYoutubeStats } from "@/utils/youtube-stats";
 import { isUnavailableVideo } from "@/features/admin/playlist/video-utils";
 import { suggestSeriesTypeSlug } from "@/features/admin/lib/series-type-detect";
 
@@ -366,11 +367,29 @@ export async function importPlaylistAsSeries(
     }
 
     const CHUNK_SIZE = 200;
+    // Statistik YouTube (views/likes) sekali per import — 1 unit/video (batch 50).
+    // Gagal (tanpa key / kuota habis) tidak mengagalkan import.
+    let statsMap = new Map<string, { viewCount: number; likeCount: number }>();
+    try {
+      statsMap = await fetchYoutubeVideoStats(audioRows.map((r) => r.item.videoId));
+    } catch {
+      statsMap = new Map();
+    }
+
     for (let i = 0; i < audioRows.length; i += CHUNK_SIZE) {
       const chunk = audioRows.slice(i, i + CHUNK_SIZE);
       await prisma.$transaction(
         async (tx) => {
           for (const row of chunk) {
+            const base = {
+              provider: "YOUTUBE" as const,
+              providerId: row.item.videoId,
+              url: `https://www.youtube.com/watch?v=${row.item.videoId}`,
+              metadata: {
+                embedUrl: `https://www.youtube.com/embed/${row.item.videoId}`,
+                thumbnail: row.item.thumbnail,
+              },
+            };
             await tx.audio.create({
               data: {
                 seriesId: series.id,
@@ -382,13 +401,11 @@ export async function importPlaylistAsSeries(
                 published: data.published,
                 mediaSources: {
                   create: {
-                    provider: "YOUTUBE",
-                    providerId: row.item.videoId,
-                    url: `https://www.youtube.com/watch?v=${row.item.videoId}`,
-                    metadata: {
-                      embedUrl: `https://www.youtube.com/embed/${row.item.videoId}`,
-                      thumbnail: row.item.thumbnail,
-                    },
+                    ...base,
+                    metadata: withYoutubeStats(
+                      base.metadata,
+                      statsMap.get(row.item.videoId) ?? undefined,
+                    ),
                   },
                 },
               },

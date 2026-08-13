@@ -19,7 +19,10 @@ export const audioCardInclude = {
       },
     },
   },
-  mediaSources: { take: 1, select: { id: true, provider: true, url: true, providerId: true } },
+  mediaSources: {
+    take: 1,
+    select: { id: true, provider: true, url: true, providerId: true, metadata: true },
+  },
 } satisfies Prisma.AudioInclude;
 
 export type AudioCard = Prisma.AudioGetPayload<{ include: typeof audioCardInclude }>;

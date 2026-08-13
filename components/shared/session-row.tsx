@@ -1,11 +1,13 @@
 "use client";
 
-import Link from "next/link";
-import { Play, Check } from "lucide-react";
+import { Play, Check, Eye } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { formatDuration } from "@/utils/duration";
+import { formatCompactCount } from "@/utils/format";
 import { ProgressBar } from "@/components/ui/progress-bar";
+import { TrackViewLink } from "@/components/shared/track-view-link";
 import type { AudioCard } from "@/repositories/audio-repository";
+import { sumSourceViews } from "@/utils/youtube-stats";
 
 type SessionRowProps = {
   audio: AudioCard;
@@ -17,9 +19,12 @@ type SessionRowProps = {
 
 /** Baris sesi dalam detail series — nomor, judul, durasi, status selesai, progress, tombol play. */
 export function SessionRow({ audio, nomor, completed = false, progressPercent = 0 }: SessionRowProps) {
+  const totalViews = audio.viewCount + sumSourceViews(audio.mediaSources);
   return (
     <li>
-      <Link
+      <TrackViewLink
+        kind="audio"
+        slug={audio.slug}
         href={`/audio/${audio.slug}`}
         className="group flex items-center gap-4 rounded-xl border border-border bg-surface px-4 py-3 transition-all hover:border-brand/20 hover:shadow-sm"
       >
@@ -73,6 +78,12 @@ export function SessionRow({ audio, nomor, completed = false, progressPercent = 
                 Selesai
               </span>
             )}
+            {totalViews > 0 && (
+              <span className="inline-flex items-center gap-1 text-[11px] text-muted">
+                <Eye className="h-3 w-3" aria-hidden />
+                {formatCompactCount(totalViews)} dilihat
+              </span>
+            )}
           </span>
           {progressPercent > 0 && !completed && (
             <span className="mt-1.5 block max-w-xs">
@@ -84,7 +95,7 @@ export function SessionRow({ audio, nomor, completed = false, progressPercent = 
         <span className="shrink-0 text-xs tabular-nums text-muted">
           {formatDuration(audio.durasi)}
         </span>
-      </Link>
+      </TrackViewLink>
     </li>
   );
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { ComponentProps } from "react";
 
 type TrackViewLinkProps = ComponentProps<typeof Link> & {
-  kind: "series" | "kitab";
+  kind: "series" | "kitab" | "audio";
   slug: string;
 };
 

@@ -16,6 +16,7 @@ import {
 } from "@/repositories/audio-repository";
 import { audioFormSchema, type AudioFormInput } from "@/features/admin/audio/validation";
 import { cleanupCover } from "@/lib/supabase/storage";
+import { fetchYoutubeVideoStats, withYoutubeStats } from "@/utils/youtube-stats";
 
 function revalidatePublic() {
   revalidatePath("/", "layout");
@@ -288,6 +289,9 @@ export async function createAudio(input: AudioFormInput): Promise<ActionState<st
           },
         };
       }
+      // Statistik YouTube (1 unit/video) — gagal tidak mengagalkan penyimpanan.
+      const stats = (await fetchYoutubeVideoStats([media.providerId])).get(media.providerId);
+      media.metadata = withYoutubeStats(media.metadata, stats);
     }
 
     const audio = await prisma.audio.create({
@@ -485,6 +489,74 @@ export async function bulkDeleteAudio(ids: string[]): Promise<ActionState> {
       error: {
         code: "UNKNOWN_ERROR",
         message: error instanceof Error ? error.message : "Gagal menghapus",
+      },
+    };
+  }
+}
+
+/**
+ * Sinkronkan statistik view YouTube (metadata MediaSource YOUTUBE).
+ * Biaya: 1 unit per video — semua audio sekaligus bisa besar; kalau kuota
+ * habis sebagian, sisanya tampil sebagai failed (dapat diulang).
+ */
+export async function syncYoutubeViews(): Promise<
+  ActionState<{ updated: number; failed: number }>
+> {
+  try {
+    await requireAdmin();
+
+    const sources = await prisma.mediaSource.findMany({
+      where: { provider: "YOUTUBE" },
+      select: { id: true, providerId: true, metadata: true },
+      orderBy: { createdAt: "asc" },
+    });
+    if (sources.length === 0) {
+      return { ok: true, data: { updated: 0, failed: 0 } };
+    }
+
+    const statsMap = await fetchYoutubeVideoStats(sources.map((s) => s.providerId));
+    if (statsMap.size === 0) {
+      return {
+        ok: false,
+        error: {
+          code: "QUOTA_EXHAUSTED",
+          message:
+            "Tidak ada data diambil — cek YOUTUBE_API_KEY atau kuota YouTube Data API hari ini habis.",
+        },
+      };
+    }
+
+    let updated = 0;
+    for (let i = 0; i < sources.length; i += 50) {
+      const chunk = sources.slice(i, i + 50);
+      await Promise.all(
+        chunk.map(async (source) => {
+          const stats = statsMap.get(source.providerId);
+          if (!stats) return;
+          const base = (source.metadata ?? {}) as Prisma.JsonObject;
+          const merged: Prisma.InputJsonValue = {
+            ...base,
+            viewCount: stats.viewCount,
+            likeCount: stats.likeCount,
+            statsFetchedAt: new Date().toISOString(),
+          };
+          await prisma.mediaSource.update({
+            where: { id: source.id },
+            data: { metadata: merged },
+          });
+          updated++;
+        }),
+      );
+    }
+
+    revalidatePublic();
+    return { ok: true, data: { updated, failed: sources.length - updated } };
+  } catch (error) {
+    return {
+      ok: false,
+      error: {
+        code: "UNKNOWN_ERROR",
+        message: error instanceof Error ? error.message : "Gagal sinkron view YouTube",
       },
     };
   }
