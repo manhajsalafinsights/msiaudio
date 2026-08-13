@@ -47,7 +47,6 @@ async function HomeStatsContent() {
           {i > 0 && <span className="mx-2.5 h-1 w-1 rounded-full bg-brand/30" aria-hidden />}
           <item.icon className="h-4 w-4 text-brand" aria-hidden />
           <span className="text-sm font-bold text-foreground">{formatCompactCount(item.value)}</span>
-          <span className="text-xs text-muted">{item.label}</span>
         </span>
       ))}
     </div>
