@@ -3,6 +3,9 @@
  * Butuh YOUTUBE_API_KEY (Data API v3):
  * - channels.list → resolve @handle / /user/ / /channel/ menjadi channelId (1 unit).
  * - playlists.list  → paginasi seluruh playlist channel (1 unit per halaman).
+ *
+ * Bila kuota harian habis (HTTP 403 QUOTA_EXCEEDED), semua error diseragamkan
+ * menjadi QUOTA_EXHAUSTED agar admin tahu penyebabnya.
  */
 
 export type ChannelPlaylist = {
@@ -20,21 +23,39 @@ export type ChannelPlaylistsResult = {
   uploadsPlaylistId: string | null;
   playlists: ChannelPlaylist[];
   truncated: boolean;
+  quotaExhausted?: boolean;
 };
 
 const CHANNEL_ID_PATTERN = /^UC[A-Za-z0-9_-]{22}$/;
 
-async function fetchJson<T>(url: string): Promise<T | null> {
+type ApiResponse<T> = { status: number; data: T | null };
+
+async function fetchApi<T>(url: string): Promise<ApiResponse<T>> {
   try {
     const res = await fetch(url, {
       headers: { Accept: "application/json" },
       signal: AbortSignal.timeout(15000),
     });
-    if (!res.ok) return null;
-    return (await res.json()) as T;
+    if (!res.ok) return { status: res.status, data: null };
+    return { status: res.status, data: (await res.json()) as T };
   } catch {
-    return null;
+    return { status: 0, data: null };
   }
+}
+
+function quotaError(): ResolveChannelResult {
+  return {
+    ok: false,
+    error: {
+      code: "QUOTA_EXHAUSTED",
+      message:
+        "Kuota YouTube Data API habis hari ini — coba lagi besok, atau tambah kuota di Google Cloud Console.",
+    },
+  };
+}
+
+function isQuota(status: number): boolean {
+  return status === 403;
 }
 
 type ChannelInfo = {
@@ -45,20 +66,54 @@ type ChannelInfo = {
   }[];
 };
 
-async function resolveViaChannelsApi(params: Record<string, string>, apiKey: string) {
+type SearchInfo = {
+  items?: { id?: { channelId?: string }; snippet?: { title?: string } }[];
+};
+
+async function resolveViaChannelsApi(
+  params: Record<string, string>,
+  apiKey: string,
+): Promise<{ resolved: { channelId: string; channelTitle: string; uploadsPlaylistId: string | null } | null; quota: boolean }> {
   const qs = new URLSearchParams({
     part: "snippet,contentDetails",
     maxResults: "1",
     key: apiKey,
     ...params,
   });
-  const data = await fetchJson<ChannelInfo>(`https://www.googleapis.com/youtube/v3/channels?${qs}`);
+  const { status, data } = await fetchApi<ChannelInfo>(
+    `https://www.googleapis.com/youtube/v3/channels?${qs}`,
+  );
+  if (isQuota(status)) return { resolved: null, quota: true };
+
   const item = data?.items?.[0];
-  if (!item?.id) return null;
+  if (!item?.id) {
+    // Fallback: cari via search.list (handle mungkin tak cocok persis).
+    const q = Object.values(params).join(" ").replace(/^@/, "");
+    const searchQs = new URLSearchParams({
+      part: "snippet",
+      type: "channel",
+      q,
+      maxResults: "1",
+      key: apiKey,
+    });
+    const search = await fetchApi<SearchInfo>(
+      `https://www.googleapis.com/youtube/v3/search?${searchQs}`,
+    );
+    if (isQuota(search.status)) return { resolved: null, quota: true };
+    const found = search.data?.items?.[0]?.id?.channelId;
+    if (found) {
+      return { resolved: { channelId: found, channelTitle: "", uploadsPlaylistId: null }, quota: false };
+    }
+    return { resolved: null, quota: false };
+  }
+
   return {
-    channelId: item.id,
-    channelTitle: item.snippet?.title?.trim() ?? "",
-    uploadsPlaylistId: item.contentDetails?.relatedPlaylists?.uploads ?? null,
+    resolved: {
+      channelId: item.id,
+      channelTitle: item.snippet?.title?.trim() ?? "",
+      uploadsPlaylistId: item.contentDetails?.relatedPlaylists?.uploads ?? null,
+    },
+    quota: false,
   };
 }
 
@@ -85,6 +140,7 @@ export async function resolveChannelId(input: string): Promise<ResolveChannelRes
     uploadsPlaylistId: string | null;
   }
   let resolved: Resolved | null = null;
+  let quota = false;
 
   try {
     const url = new URL(value);
@@ -94,22 +150,30 @@ export async function resolveChannelId(input: string): Promise<ResolveChannelRes
       if (segments[0] === "channel" && segments[1]) {
         resolved = { channelId: segments[1], channelTitle: "", uploadsPlaylistId: null };
       } else if (segments[0] === "user" && segments[1]) {
-        resolved = await resolveViaChannelsApi({ forUsername: segments[1] }, apiKey);
+        const r = await resolveViaChannelsApi({ forUsername: segments[1] }, apiKey);
+        resolved = r.resolved;
+        quota = r.quota;
       } else if (segments[0].startsWith("@")) {
-        resolved = await resolveViaChannelsApi({ forHandle: segments[0] }, apiKey);
+        const r = await resolveViaChannelsApi({ forHandle: segments[0] }, apiKey);
+        resolved = r.resolved;
+        quota = r.quota;
       }
     }
   } catch {
     // bukan URL valid — lanjut ke pengecekan ID polos / @handle
   }
 
-  if (!resolved) {
+  if (!resolved && !quota) {
     if (value.startsWith("@")) {
-      resolved = await resolveViaChannelsApi({ forHandle: value }, apiKey);
+      const r = await resolveViaChannelsApi({ forHandle: value }, apiKey);
+      resolved = r.resolved;
+      quota = r.quota;
     } else if (CHANNEL_ID_PATTERN.test(value)) {
       resolved = { channelId: value, channelTitle: "", uploadsPlaylistId: null };
     }
   }
+
+  if (quota) return quotaError();
 
   if (!resolved) {
     return {
@@ -117,7 +181,7 @@ export async function resolveChannelId(input: string): Promise<ResolveChannelRes
       error: {
         code: "INVALID_CHANNEL",
         message:
-          "Link channel tidak dikenali. Gunakan format @handle (contoh: @yufid), /channel/UC..., /user/..., atau ID polos UC...",
+          "Link channel tidak dikenali atau channel tidak ditemukan. Gunakan format @handle (contoh: @yufid), /channel/UC..., /user/..., atau ID polos UC...",
       },
     };
   }
@@ -128,9 +192,18 @@ export async function resolveChannelId(input: string): Promise<ResolveChannelRes
 export async function fetchChannelPlaylists(channelId: string): Promise<ChannelPlaylistsResult> {
   const apiKey = process.env.YOUTUBE_API_KEY ?? "";
 
-  const info = await fetchJson<ChannelInfo>(
+  const info = await fetchApi<ChannelInfo>(
     `https://www.googleapis.com/youtube/v3/channels?part=snippet,contentDetails&id=${channelId}&key=${apiKey}`,
   );
+  if (isQuota(info.status)) {
+    return {
+      channelTitle: "Channel",
+      uploadsPlaylistId: null,
+      playlists: [],
+      truncated: false,
+      quotaExhausted: true,
+    };
+  }
 
   const playlists: ChannelPlaylist[] = [];
   let pageToken = "";
@@ -144,7 +217,7 @@ export async function fetchChannelPlaylists(channelId: string): Promise<ChannelP
       key: apiKey,
       ...(pageToken ? { pageToken } : {}),
     });
-    const data = await fetchJson<{
+    const { status, data } = await fetchApi<{
       items?: {
         id?: string;
         snippet?: { title?: string };
@@ -152,6 +225,15 @@ export async function fetchChannelPlaylists(channelId: string): Promise<ChannelP
       }[];
       nextPageToken?: string;
     }>(`https://www.googleapis.com/youtube/v3/playlists?${qs}`);
+    if (isQuota(status)) {
+      return {
+        channelTitle: "Channel",
+        uploadsPlaylistId: null,
+        playlists: [],
+        truncated: false,
+        quotaExhausted: true,
+      };
+    }
     if (!data) break;
     for (const item of data.items ?? []) {
       if (!item.id) continue;
@@ -168,13 +250,13 @@ export async function fetchChannelPlaylists(channelId: string): Promise<ChannelP
     }
   } while (pageToken);
 
-  const uploadsPlaylistId = info?.items?.[0]?.contentDetails?.relatedPlaylists?.uploads ?? null;
+  const uploadsPlaylistId = info.data?.items?.[0]?.contentDetails?.relatedPlaylists?.uploads ?? null;
   const filtered = uploadsPlaylistId
     ? playlists.filter((p) => p.id !== uploadsPlaylistId)
     : playlists;
 
   return {
-    channelTitle: info?.items?.[0]?.snippet?.title?.trim() ?? "Channel",
+    channelTitle: info.data?.items?.[0]?.snippet?.title?.trim() ?? "Channel",
     uploadsPlaylistId,
     playlists: filtered,
     truncated,

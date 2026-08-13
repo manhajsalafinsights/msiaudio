@@ -45,6 +45,16 @@ export async function previewChannel(url: string): Promise<ActionState<ChannelPr
     if (!resolved.ok) return { ok: false, error: resolved.error };
 
     const data = await fetchChannelPlaylists(resolved.channelId);
+    if (data.quotaExhausted) {
+      return {
+        ok: false,
+        error: {
+          code: "QUOTA_EXHAUSTED",
+          message:
+            "Kuota YouTube Data API habis hari ini — coba lagi besok, atau tambah kuota di Google Cloud Console.",
+        },
+      };
+    }
     if (data.playlists.length === 0) {
       return {
         ok: false,
