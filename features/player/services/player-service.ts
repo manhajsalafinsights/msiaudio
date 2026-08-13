@@ -163,6 +163,7 @@ export function toPlayerAudio(audio: AudioDetail): PlayerAudio {
     durasi: audio.durasi,
     cover: audio.cover,
     nomorSesi: audio.nomorSesi,
+    viewCount: audio.viewCount,
     createdAt: audio.createdAt,
     updatedAt: audio.updatedAt,
     series: {
@@ -186,6 +187,7 @@ export function toPlayerAudio(audio: AudioDetail): PlayerAudio {
       provider: ms.provider,
       url: ms.url,
       providerId: ms.providerId,
+      metadata: ms.metadata,
     })),
     chapters: audio.chapters
       ? audio.chapters.map((c) => ({
@@ -234,6 +236,7 @@ export function buildPlayerQueue(
       durasi: audio.durasi,
       cover: audio.cover,
       nomorSesi: audio.nomorSesi,
+      viewCount: audio.viewCount,
       createdAt: audio.createdAt,
       updatedAt: audio.updatedAt,
       series,
@@ -241,6 +244,7 @@ export function buildPlayerQueue(
         provider: ms.provider,
         url: ms.url,
         providerId: ms.providerId,
+        metadata: ms.metadata,
       })),
     } satisfies PlayerAudio,
     position: index,

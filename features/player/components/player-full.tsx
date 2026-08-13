@@ -19,6 +19,9 @@ import { NoteEditor } from "@/features/note/note-editor";
 import { useProgressReporter } from "@/features/progress/use-progress";
 import { PlayerTranscript } from "@/features/player/components/player-transcript";
 import type { TranscriptSegment } from "@/utils/youtube-captions";
+import { sumSourceViews } from "@/utils/youtube-stats";
+import { formatCompactCount } from "@/utils/format";
+import { Eye } from "lucide-react";
 
 const isDevelopment = process.env.NODE_ENV === "development";
 // Panel debug disembunyikan secara default. Aktifkan dengan mengganti menjadi `true`.
@@ -160,6 +163,7 @@ export function PlayerFull({
   const hasNext = currentQueueIndex < queueLength - 1;
 
   const speakerNames = displayAudio.series.speakers.map((s) => s.speaker.nama).join(", ");
+  const totalViews = displayAudio.viewCount + sumSourceViews(displayAudio.mediaSources);
 
   // Session list (slug nyata dari server; status listening di-merge client-side).
   const baseSessionItems = sessions?.length
@@ -292,6 +296,12 @@ export function PlayerFull({
               {speakerNames && (
                 <p className="mt-1.5 text-sm font-medium text-foreground/70">
                   {speakerNames}
+                </p>
+              )}
+              {totalViews > 0 && (
+                <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted">
+                  <Eye className="h-3.5 w-3.5" aria-hidden />
+                  {formatCompactCount(totalViews)} dilihat
                 </p>
               )}
             </div>

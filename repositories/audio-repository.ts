@@ -82,7 +82,10 @@ export async function listPublishedAudioQueueBySeries(seriesId: string) {
       nomorSesi: true,
       createdAt: true,
       updatedAt: true,
-      mediaSources: { select: { id: true, provider: true, url: true, providerId: true } },
+      viewCount: true,
+      mediaSources: {
+        select: { id: true, provider: true, url: true, providerId: true, metadata: true },
+      },
     },
     orderBy: { nomorSesi: "asc" },
   });

@@ -16,6 +16,8 @@ export interface MediaSource {
   provider: MediaProvider;
   url: string;
   providerId?: string;
+  /** Metadata tambahan provider (mis. statistik view YouTube). */
+  metadata?: unknown;
 }
 
 /**
@@ -37,6 +39,8 @@ export interface PlayerAudio {
   durasi: number;
   cover: string | null;
   nomorSesi: number;
+  /** Kunjungan pengguna aplikasi (track-view), ditambah view YouTube di metadata media source. */
+  viewCount: number;
   createdAt: Date;
   updatedAt: Date;
   series: {

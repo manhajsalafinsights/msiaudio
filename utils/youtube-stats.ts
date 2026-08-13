@@ -65,7 +65,7 @@ export function withYoutubeStats<T extends object>(
 
 /** Jumlah total view YouTube dari kumpulan media source (sumber metadata). */
 export function sumSourceViews(
-  mediaSources: { provider: string; metadata: unknown }[] | null | undefined,
+  mediaSources: { provider: string; metadata?: unknown }[] | null | undefined,
 ): number {
   let total = 0;
   for (const source of mediaSources ?? []) {
