@@ -91,12 +91,15 @@ export async function listPublishedAudioQueueBySeries(seriesId: string) {
   });
 }
 
-/** Audio published terbaru lintas series (Home → "Kajian Terbaru").
- *  Dicampur antar ustadz (round-robin) supaya hasilnya tidak didominasi
- *  satu ustadz yang baru saja diimpor playlist-nya. */
-export async function listRecentPublishedAudio(limit: number) {
+/** Audio published terbaru dari series dengan tipe tertentu (Home → "Kajian Terbaru").
+ *  Khusus tematik secara default — dicampur antar ustadz (round-robin) supaya
+ *  tiap slide sebisa mungkin ustadz yang berbeda (mis. 8 slide = 8 nama). */
+export async function listRecentPublishedAudio(limit: number, seriesTypeSlug = "tematik") {
   const rows = await prisma.audio.findMany({
-    where: { published: true },
+    where: {
+      published: true,
+      series: { seriesType: { slug: seriesTypeSlug } },
+    },
     include: audioCardInclude,
     orderBy: { createdAt: "desc" },
     take: limit * 4,

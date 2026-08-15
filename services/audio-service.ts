@@ -1,8 +1,8 @@
 import { NotFoundError } from "@/lib/errors/app-error";
 import * as audioRepository from "@/repositories/audio-repository";
 
-export async function getRecentAudio(limit = 8) {
-  return audioRepository.listRecentPublishedAudio(limit);
+export async function getRecentAudio(limit = 8, seriesTypeSlug = "tematik") {
+  return audioRepository.listRecentPublishedAudio(limit, seriesTypeSlug);
 }
 
 /**
