@@ -82,6 +82,8 @@ type AutoRotatingListProps = {
   intervalMs?: number;
   className?: string;
   ariaLabel?: string;
+  /** "forward": mulai dari item pertama; "backward": mulai dari item terakhir (paling awal di-upload). */
+  direction?: "forward" | "backward";
 };
 
 /**
@@ -94,6 +96,7 @@ export function AutoRotatingList({
   intervalMs = 4500,
   className,
   ariaLabel = "Daftar kartu yang berganti otomatis",
+  direction = "forward",
 }: AutoRotatingListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLUListElement>(null);
@@ -124,7 +127,7 @@ export function AutoRotatingList({
     if (step <= 0) return;
     const maxPos = Math.round((track.scrollWidth - container.clientWidth) / step);
     let pos = Math.round(container.scrollLeft / step);
-    if (pos >= maxPos) pos = 0;
+    if (pos >= maxPos) pos = Math.max(0, items.length - 1);
     setPosition(Math.min(pos, Math.max(0, items.length - 1)));
   }, [getStep, items.length]);
 
@@ -146,6 +149,17 @@ export function AutoRotatingList({
     if (paused || items.length <= spv) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
+    // Backward: mulai dari ujung (item paling awal di-upload) lalu mundur.
+    if (direction === "backward") {
+      const container = containerRef.current;
+      const track = trackRef.current;
+      if (!container || !track) return;
+      const maxScroll = Math.max(0, track.scrollWidth - container.clientWidth);
+      if (maxScroll > 0) {
+        container.scrollTo({ left: maxScroll, behavior: "auto" });
+      }
+    }
+
     const id = setInterval(() => {
       const container = containerRef.current;
       const track = trackRef.current;
@@ -154,6 +168,15 @@ export function AutoRotatingList({
       if (maxScroll <= 0) return;
       const step = getStep();
       if (step <= 0) return;
+      if (direction === "backward") {
+        const next = container.scrollLeft - step;
+        if (next <= -step / 2) {
+          container.scrollTo({ left: maxScroll, behavior: "auto" });
+        } else {
+          container.scrollTo({ left: next, behavior: "smooth" });
+        }
+        return;
+      }
       const next = container.scrollLeft + step;
       if (next >= maxScroll - 4) {
         container.scrollTo({ left: 0, behavior: "auto" });
@@ -162,7 +185,7 @@ export function AutoRotatingList({
       }
     }, intervalMs);
     return () => clearInterval(id);
-  }, [paused, items.length, spv, intervalMs, getStep]);
+  }, [paused, items.length, spv, intervalMs, getStep, direction]);
 
   const go = useCallback(
     (dir: 1 | -1) => {

@@ -78,6 +78,7 @@ async function LatestAudioList() {
     <AutoRotatingList
       ariaLabel="Kajian terbaru yang berganti otomatis"
       slidesPerView={{ base: 2, sm: 2, md: 3, lg: 4 }}
+      direction="backward"
       items={audioList.map((audio) => (
         <AudioCard key={audio.id} audio={audio} />
       ))}
