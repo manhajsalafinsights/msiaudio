@@ -45,7 +45,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
         <StatCard
           title="Ustadz"
           value={stats.ustadz}
@@ -88,13 +88,15 @@ export default async function AdminDashboardPage() {
           icon={<Tags className="h-5 w-5" />}
           href="/admin/tag"
         />
-        <StatCard
-          title="Komentar"
-          value={stats.komentar}
-          sub="dari pengunjung"
-          icon={<MessageSquare className="h-5 w-5" />}
-          href="/admin/komentar"
-        />
+        <div className="col-span-2 sm:col-span-1">
+          <StatCard
+            title="Komentar"
+            value={stats.komentar}
+            sub="dari pengunjung"
+            icon={<MessageSquare className="h-5 w-5" />}
+            href="/admin/komentar"
+          />
+        </div>
       </div>
 
       {/* Quick Actions */}

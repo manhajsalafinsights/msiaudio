@@ -38,18 +38,18 @@ export function QuickActions() {
   return (
     <div>
       <h3 className="text-sm font-semibold">Aksi Cepat</h3>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-5">
         {actions.map((action) => (
           <Link
             key={action.href}
             href={action.href}
-            className="group rounded-xl border border-border bg-surface p-4 transition-colors hover:border-brand/40"
+            className="group min-w-0 rounded-xl border border-border bg-surface p-4 transition-colors hover:border-brand/40"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10 text-brand">
               <action.icon className="h-4.5 w-4.5" />
             </span>
-            <p className="mt-3 text-sm font-medium group-hover:text-brand">{action.label}</p>
-            <p className="mt-0.5 text-xs text-muted">{action.desc}</p>
+            <p className="mt-3 truncate text-sm font-medium group-hover:text-brand">{action.label}</p>
+            <p className="mt-0.5 truncate text-xs text-muted">{action.desc}</p>
           </Link>
         ))}
       </div>

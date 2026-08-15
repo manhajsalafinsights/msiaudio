@@ -11,18 +11,20 @@ interface StatCardProps {
 
 export function StatCard({ title, value, icon, sub, href }: StatCardProps) {
   const content = (
-    <div className="card card-outlined p-5 transition-colors group-hover:border-brand/40">
-      <div className="flex items-center justify-between">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand/10 text-brand">
+    <div className="card card-outlined min-w-0 p-4 transition-colors group-hover:border-brand/40 sm:p-5">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand sm:h-10 sm:w-10">
           {icon}
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-2xl font-bold tabular-nums">{value.toLocaleString("id-ID")}</span>
-          {href && <ArrowUpRight className="h-4 w-4 text-muted transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />}
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span className="truncate text-xl font-bold tabular-nums sm:text-2xl">
+            {value.toLocaleString("id-ID")}
+          </span>
+          {href && <ArrowUpRight className="h-4 w-4 shrink-0 text-muted transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />}
         </div>
       </div>
-      <p className="mt-3 text-sm font-medium">{title}</p>
-      {sub && <p className="mt-0.5 text-xs text-muted">{sub}</p>}
+      <p className="mt-3 truncate text-sm font-medium">{title}</p>
+      {sub && <p className="mt-0.5 text-xs leading-snug text-muted">{sub}</p>}
     </div>
   );
 
