@@ -40,7 +40,7 @@ function KitabRow({ kitab }: { kitab: { id: string; nama: string; seriesCount: n
   return (
     <li>
       <Link
-        href={`/explore?type=${kitab.id}`}
+        href={`/explore?tab=series&type=${kitab.id}`}
         className="group flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3 transition-all hover:border-brand/20 hover:shadow-sm"
       >
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand">
@@ -65,7 +65,7 @@ function SpeakerRow({
   return (
     <li>
       <Link
-        href={`/explore?ustadz=${speaker.id}`}
+        href={`/explore?tab=series&ustadz=${speaker.id}`}
         className="group flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3 transition-all hover:border-brand/20 hover:shadow-sm"
       >
         {speaker.foto ? (
@@ -169,7 +169,7 @@ export default async function SearchPage({
               </div>
               {groups.totalSeries > groups.series.length && (
                 <Button asChild variant="outline" size="sm" className="self-start">
-                  <Link href={`/explore?q=${encodeURIComponent(query)}`}>
+                  <Link href={`/explore?tab=series&q=${encodeURIComponent(query)}`}>
                     Lihat semua {formatCount(groups.totalSeries)} series
                   </Link>
                 </Button>
