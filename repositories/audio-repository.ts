@@ -91,30 +91,34 @@ export async function listPublishedAudioQueueBySeries(seriesId: string) {
   });
 }
 
-/** Audio published terbaru dari series dengan tipe tertentu (Home → "Kajian Terbaru").
- *  Khusus tematik secara default — dicampur antar ustadz (round-robin) supaya
- *  tiap slide sebisa mungkin ustadz yang berbeda (mis. 8 slide = 8 nama). */
-export async function listRecentPublishedAudio(limit: number, seriesTypeSlug = "tematik") {
+/** Audio published terbaru (Home → "Kajian Terbaru").
+ *  Dicampur antar ustadz/series (round-robin) supaya tiap slide sebisa mungkin
+ *  berasal dari ustadz yang berbeda (mis. 8 slide = 8 nama). Jendela pencarian
+ *  diperlebar agar satu impor besar (satu series/ustadz) tidak mendominasi. */
+export async function listRecentPublishedAudio(limit: number, seriesTypeSlug?: string) {
+  const scanCap = Math.max(limit * 20, 400);
   const rows = await prisma.audio.findMany({
     where: {
       published: true,
-      series: { seriesType: { slug: seriesTypeSlug } },
+      ...(seriesTypeSlug ? { series: { seriesType: { slug: seriesTypeSlug } } } : {}),
     },
     include: audioCardInclude,
     orderBy: { createdAt: "desc" },
-    take: limit * 4,
+    take: scanCap,
   });
 
-  // Kelompokkan per ustadz (urutan bucket = kebaruan ustadz pertama muncul).
+  // Kelompokkan per ustadz (urutan bucket = kebaruan ustadz pertama muncul);
+  // konten tanpa ustadz dikelompokkan per series agar tetap bervariasi.
   const buckets = new Map<string, AudioCard[]>();
   for (const audio of rows) {
-    const key = audio.series.speakers[0]?.speaker.id ?? "tanpa-ustadz";
+    const speakerId = audio.series.speakers[0]?.speaker.id;
+    const key = speakerId ? `ustadz:${speakerId}` : `series:${audio.series.id}`;
     const list = buckets.get(key) ?? [];
     list.push(audio);
     buckets.set(key, list);
   }
 
-  // Ambil bergantian satu-satu dari tiap ustadz sampai limit terpenuhi.
+  // Ambil bergantian satu-satu dari tiap bucket sampai limit terpenuhi.
   const keys = [...buckets.keys()];
   const mixed: AudioCard[] = [];
   let progressed = true;

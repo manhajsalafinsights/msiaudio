@@ -3,6 +3,8 @@ export const site = {
   tagline: "Belajar audio kajian Islam",
   description:
     "Platform belajar audio kajian Islam — ekosistem Manhaj Salaf Insights. Dengarkan kajian kitab, daulah, dan rekaman ilmiah, lalu lanjutkan di perangkat mana pun.",
+  // NEXT_PUBLIC_APP_URL menentukan canonical/OG/sitemap.
+  // Wajib di-set ke domain produksi di Vercel: https://msiaudio.manhajsalafinsights.com
   url: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   locale: "id_ID",
 } as const;
