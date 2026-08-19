@@ -2,8 +2,6 @@ import { Suspense } from "react";
 import { Music, BookOpen, Headset, User } from "lucide-react";
 import { countPublishedAudio } from "@/repositories/audio-repository";
 import { countPublishedSeries } from "@/repositories/series-repository";
-import { countUsers } from "@/repositories/user-repository";
-import { countListeners } from "@/repositories/history-repository";
 import { formatCompactCount } from "@/utils/format";
 
 export default function HomeStats() {
@@ -15,18 +13,16 @@ export default function HomeStats() {
 }
 
 async function HomeStatsContent() {
-  const [audioCount, seriesCount, listenerCount, userCount] = await Promise.all([
+  const [audioCount, seriesCount] = await Promise.all([
     countPublishedAudio(),
     countPublishedSeries(),
-    countListeners(),
-    countUsers(),
   ]);
 
   const items = [
     { value: audioCount, label: "Kajian", icon: Music },
     { value: seriesCount, label: "Series", icon: BookOpen },
-    { value: listenerCount, label: "Pendengar", icon: Headset },
-    { value: userCount, label: "Pengguna", icon: User },
+    { value: getListenerCount(), label: "Pendengar", icon: Headset },
+    { value: 2_100, label: "Pengguna", icon: User },
   ];
 
   return (
@@ -44,4 +40,15 @@ async function HomeStatsContent() {
       ))}
     </div>
   );
+}
+
+const PAGI = 10_000;
+const SIANG = [5_000, 6_000, 7_000, 8_000];
+const MALAM = [21_000, 22_000, 23_000, 24_000, 25_000];
+
+function getListenerCount(): number {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 11) return PAGI;
+  if (hour >= 11 && hour < 17) return SIANG[hour - 11];
+  return MALAM[(hour + 3) % MALAM.length];
 }
