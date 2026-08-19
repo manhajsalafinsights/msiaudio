@@ -8,13 +8,15 @@ type AudioDiscProps = {
   className?: string;
   /** Sembunyikan badge ikon musik (untuk ukuran mini). */
   hideBadge?: boolean;
+  /** Matikan animasi putar (untuk tampilan statis). */
+  spin?: boolean;
 };
 
 /**
  * Piringan CD yang berputar dengan cover di label tengah — pengganti tampilan
  * cover video (mis. thumbnail YouTube) agar kartu terlihat seperti audio CD.
  */
-export function AudioDisc({ src, alt, className, hideBadge = false }: AudioDiscProps) {
+export function AudioDisc({ src, alt, className, hideBadge = false, spin = true }: AudioDiscProps) {
   return (
     <div
       className={cn(
@@ -33,7 +35,10 @@ export function AudioDisc({ src, alt, className, hideBadge = false }: AudioDiscP
       <div className="absolute inset-8 rounded-full bg-brand/10 blur-2xl" aria-hidden />
 
       <div
-        className="relative aspect-square h-[76%] animate-spin-slow rounded-full motion-reduce:animate-none"
+        className={cn(
+          "relative aspect-square h-[76%] rounded-full motion-reduce:animate-none",
+          spin && "animate-spin-slow",
+        )}
         style={{ animationDuration: "8s", animationTimingFunction: "linear" }}
       >
         {/* CD body */}
