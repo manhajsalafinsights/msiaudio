@@ -318,7 +318,7 @@ async function CategoriesChips() {
           <Link
             key={category.id}
             href={`/kategori/${category.slug}`}
-            className="chip flex-none snap-start whitespace-nowrap transition-colors hover:border-brand/30 hover:bg-brand/5 hover:text-brand"
+            className="chip flex-none snap-start whitespace-nowrap"
           >
             <Icon className="h-3.5 w-3.5 text-brand" aria-hidden />
             {category.nama}

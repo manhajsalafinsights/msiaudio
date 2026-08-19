@@ -29,7 +29,7 @@ export function HomeSearch() {
           name="q"
           placeholder="Cari series, kitab, ustadz..."
           autoComplete="off"
-          className="input h-12"
+          className="input h-12 rounded-full"
           style={{ paddingLeft: "2.75rem" }}
         />
       </label>

@@ -17,12 +17,9 @@ export function AudioCard({ audio, className }: AudioCardProps) {
   const isYouTube = audio.mediaSources[0]?.provider === "YOUTUBE";
 
   return (
-    <div className={cn("h-full", className)}>
-      <Link
-        href={`/audio/${audio.slug}`}
-        className="group flex h-full flex-col gap-2 rounded-xl p-1.5 transition-colors duration-200 hover:bg-black/[0.05] dark:hover:bg-white/[0.06]"
-      >
-        <span className="relative block aspect-square w-full overflow-hidden">
+    <div className={cn("group relative h-full rounded-xl bg-surface p-3 transition-colors duration-300 hover:bg-surface-elevated", className)}>
+      <Link href={`/audio/${audio.slug}`} className="flex h-full flex-col gap-2.5">
+        <span className="relative block aspect-square w-full overflow-hidden rounded-lg shadow-lg shadow-black/20">
           {isYouTube ? (
             <AudioDisc
               src={audio.cover ?? audio.series?.cover}
@@ -38,31 +35,25 @@ export function AudioCard({ audio, className }: AudioCardProps) {
             />
           )}
 
-          {/* Tombol play: selalu terlihat di mobile, muncul saat hover di desktop */}
+          {/* Tombol play ala Spotify: selalu terlihat di mobile, muncul saat hover di desktop */}
           <span
-            className="absolute inset-0 flex items-center justify-center
-              md:bg-black/0 md:opacity-0 md:transition-all md:duration-200
-              md:group-hover:bg-black/25 md:group-hover:opacity-100"
+            className="absolute bottom-2 right-2 flex h-11 w-11 items-center justify-center rounded-full bg-brand text-brand-strong shadow-lg shadow-black/40 transition-all duration-300
+              md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-hover:scale-105"
             aria-hidden
           >
-            <span
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-brand text-white shadow-lg shadow-brand/30
-                transition-transform duration-200 group-hover:scale-105"
-            >
-              <Play className="ml-0.5 h-6 w-6 fill-current" />
-            </span>
+            <Play className="ml-0.5 h-5 w-5 fill-current" />
           </span>
 
-          <span className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-1 text-xs font-medium tabular-nums text-white backdrop-blur-sm">
+          <span className="absolute bottom-2 left-2 rounded-md bg-black/70 px-2 py-0.5 text-xs font-medium tabular-nums text-white backdrop-blur-sm">
             {formatDuration(audio.durasi)}
           </span>
         </span>
 
         <span className="flex flex-col gap-1 px-0.5">
-          <span className="line-clamp-2 text-sm font-semibold leading-snug group-hover:text-brand">
+          <span className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
             {audio.judul}
           </span>
-          {meta && <span className="truncate text-xs text-muted">{meta}</span>}
+          {meta && <span className="truncate text-xs font-medium text-secondary">{meta}</span>}
         </span>
       </Link>
     </div>

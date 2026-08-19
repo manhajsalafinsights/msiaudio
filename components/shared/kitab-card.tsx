@@ -19,16 +19,16 @@ export function KitabCard({ kitab }: KitabCardProps) {
       href={`/kitab/${kitab.slug}`}
       kind="kitab"
       slug={kitab.slug}
-      className="group flex items-center gap-3 rounded-2xl bg-surface p-4 shadow-xs transition-all hover:shadow-md"
+      className="group flex flex-col gap-3 rounded-xl bg-surface p-3 transition-colors duration-300 hover:bg-surface-elevated"
     >
-      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand/10 text-brand">
-        <BookOpen className="h-6 w-6" aria-hidden />
+      <span className="flex aspect-square w-full items-center justify-center rounded-lg bg-gradient-to-br from-brand/20 to-brand/5 text-brand transition-transform duration-300 group-hover:scale-[1.02]">
+        <BookOpen className="h-10 w-10" aria-hidden />
       </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-[15px] font-semibold group-hover:text-brand">
+      <span className="min-w-0 px-0.5">
+        <span className="block truncate text-[15px] font-semibold text-foreground">
           {kitab.nama}
         </span>
-        <span className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-muted">
+        <span className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs font-medium text-secondary">
           <span className="inline-flex items-center gap-1">
             <Eye className="h-3.5 w-3.5 text-brand/70" aria-hidden />
             {formatCompactCount(kitab.viewCount)} dilihat
