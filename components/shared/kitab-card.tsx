@@ -1,7 +1,7 @@
 import { Eye } from "lucide-react";
 import { formatCount, formatCompactCount } from "@/utils/format";
 import { TrackViewLink } from "@/components/shared/track-view-link";
-import { AudioDisc } from "@/components/shared/audio-disc";
+import { KitabBook } from "@/components/shared/kitab-book";
 
 type KitabCardProps = {
   kitab: {
@@ -24,12 +24,10 @@ export function KitabCard({ kitab }: KitabCardProps) {
       className="group flex flex-col gap-3 rounded-xl bg-surface p-3 transition-colors duration-300 hover:bg-surface-elevated"
     >
       <span className="relative block aspect-[4/5] w-full overflow-hidden rounded-lg shadow-lg shadow-black/20">
-        <AudioDisc
+        <KitabBook
           src={kitab.cover}
           alt={kitab.nama}
           className="h-full w-full rounded-none"
-          hideBadge
-          spin={false}
         />
       </span>
       <span className="min-w-0 px-0.5">
