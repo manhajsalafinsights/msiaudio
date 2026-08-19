@@ -78,6 +78,8 @@ export type SeriesTypePublic = {
   description: string | null;
   seriesCount: number;
   viewCount: number;
+  /** Cover series terbaru di kitab ini (untuk tampilan CD/cover kartu). */
+  cover: string | null;
 };
 
 /** Kitab (SeriesType) yang punya ≥1 series published (dengan audio) — untuk /kitab & Pilihan Kitab.
@@ -95,6 +97,12 @@ export async function listPublishedSeriesTypes(): Promise<SeriesTypePublic[]> {
       icon: true,
       description: true,
       viewCount: true,
+      series: {
+        where: { published: true, audio: { some: { published: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { cover: true },
+      },
       _count: {
         select: {
           series: { where: { published: true, audio: { some: { published: true } } } },
@@ -111,6 +119,7 @@ export async function listPublishedSeriesTypes(): Promise<SeriesTypePublic[]> {
     description: row.description,
     seriesCount: row._count.series,
     viewCount: row.viewCount,
+    cover: row.series[0]?.cover ?? null,
   }));
 }
 
