@@ -98,7 +98,7 @@ function KitabSection() {
         fallback={
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="skeleton h-20 rounded-2xl" />
+              <div key={i} className="skeleton aspect-[4/5] rounded-xl" />
             ))}
           </div>
         }

@@ -23,7 +23,7 @@ export function KitabCard({ kitab }: KitabCardProps) {
       slug={kitab.slug}
       className="group flex flex-col gap-3 rounded-xl bg-surface p-3 transition-colors duration-300 hover:bg-surface-elevated"
     >
-      <span className="relative block aspect-square w-full overflow-hidden rounded-lg shadow-lg shadow-black/20">
+      <span className="relative block aspect-[4/5] w-full overflow-hidden rounded-lg shadow-lg shadow-black/20">
         <KitabCd
           src={kitab.cover}
           alt={kitab.nama}
